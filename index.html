@@ -3,14 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MasterKey | Expanded Edition</title>
+    <title>MasterKey Wood Elite</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="theme-dark">
-    <div class="table-surface">
+    <div class="table-texture">
         <div class="game-frame">
-            <div class="theme-switcher" onclick="toggleTheme()"></div>
-
             <div class="logo">MASTER<span>KEY</span></div>
             
             <div class="header-ui">
@@ -25,22 +23,18 @@
             </div>
 
             <div class="rank-area">
-                <span id="rank-label">WOOD NOVICE</span>
-                <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+                <div class="rank-header">
+                    <span id="rank-label">WOOD NOVICE</span>
+                    <span id="xp-counter">0 XP</span>
+                </div>
+                <div class="progress-bar"><div id="progress-fill" class="fill"></div></div>
             </div>
 
             <div class="controls-panel">
                 <button class="btn-action" onclick="resetCurrentLevel()">RESTART</button>
-                <button class="btn-action" onclick="useHint()">HINT (-20XP)</button>
+                <button class="btn-action hint-btn" onclick="useHint()">HINT (-20 XP)</button>
             </div>
         </div>
-
-        <div class="xp-feedback hidden"></div>
-
-        <audio id="move-sfx" src="https://assets.mixkit.co/sfx/preview/mixkit-software-interface-click-tone-2576.mp3"></audio>
-        <audio id="win-sfx" src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3"></audio>
-        <audio id="collision-sfx" src="https://assets.mixkit.co/sfx/preview/mixkit-short-slap-2007.mp3"></audio>
-        <audio id="hint-sfx" src="https://assets.mixkit.co/sfx/preview/mixkit-sci-fi-bonus-item-sound-2810.mp3"></audio>
     </div>
     <script src="script.js"></script>
 </body>
