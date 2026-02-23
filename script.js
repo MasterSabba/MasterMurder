@@ -1,26 +1,35 @@
 const grid = document.getElementById('grid');
 const cellSize = 52;
+
 let state = {
-    xp: 245300, lvl: 188, moves: 0,
+    xp: parseInt(localStorage.getItem('mk_xp')) || 0,
+    lvl: parseInt(localStorage.getItem('mk_lvl')) || 1,
     blocks: [], initial: []
 };
 
-function generateLevel() {
-    // Generiamo 12 pezzi per avere la densità dell'immagine
-    let layout = [{x: 0, y: 2, l: 2, o: 'h', k: true}];
-    let count = 12;
+function init() {
+    updateUI();
+    generateLevel();
+}
 
-    for(let i=0; i<count; i++) {
+function generateLevel() {
+    let layout = [{x: 0, y: 2, l: 2, o: 'h', k: true}];
+    
+    // DIFFICOLTÀ SCALABILE: 
+    // Livello 1-3: 4 pezzi | Livello 4-10: 7 pezzi | Livello 10+: 11 pezzi
+    let pieceCount = state.lvl < 4 ? 4 : (state.lvl < 10 ? 7 : 11);
+
+    for(let i=0; i < pieceCount; i++) {
         let attempts = 0;
-        while(attempts < 150) {
+        while(attempts < 200) {
             attempts++;
             let l = Math.random() > 0.8 ? 3 : 2;
             let o = Math.random() > 0.5 ? 'h' : 'v';
             let x = Math.floor(Math.random() * (6 - (o === 'h' ? l : 0)));
             let y = Math.floor(Math.random() * (6 - (o === 'v' ? l : 0)));
 
-            // Evitiamo blocchi impossibili davanti all'uscita
-            if (o === 'v' && x > 3 && y === 2) continue;
+            // Protezione riga d'uscita
+            if (o === 'v' && x > 2 && y <= 2 && y+l > 2) continue;
 
             if(!layout.some(b => checkCollision(x, y, l, o, b))) {
                 layout.push({x, y, l, o, k: false});
@@ -38,28 +47,27 @@ function render() {
     state.blocks.forEach((b, i) => {
         const div = document.createElement('div');
         div.className = `block ${b.k ? 'block-key' : (b.o === 'h' ? 'block-h' : 'block-v')}`;
-        div.style.width = (b.o === 'h' ? b.l * cellSize : cellSize) - 4 + 'px';
-        div.style.height = (b.o === 'v' ? b.l * cellSize : cellSize) - 4 + 'px';
-        div.style.left = b.x * cellSize + 2 + 'px';
-        div.style.top = b.y * cellSize + 2 + 'px';
+        div.style.width = (b.o === 'h' ? b.l * cellSize : cellSize) - 8 + 'px';
+        div.style.height = (b.o === 'v' ? b.l * cellSize : cellSize) - 8 + 'px';
+        div.style.left = b.x * cellSize + 4 + 'px';
+        div.style.top = b.y * cellSize + 4 + 'px';
 
         div.onpointerdown = (e) => {
             div.setPointerCapture(e.pointerId);
             let start = b.o === 'h' ? e.clientX : e.clientY;
-            let origin = b.o === 'h' ? b.x : b.y;
+            let pos = b.o === 'h' ? b.x : b.y;
 
             div.onpointermove = (em) => {
-                let target = origin + Math.round(((b.o === 'h' ? em.clientX : em.clientY) - start) / cellSize);
+                let delta = Math.round(((b.o === 'h' ? em.clientX : em.clientY) - start) / cellSize);
+                let target = pos + delta;
                 if(canMove(i, target)) {
                     if(b.o === 'h') b.x = target; else b.y = target;
-                    div.style.left = b.x * cellSize + 2 + 'px';
-                    div.style.top = b.y * cellSize + 2 + 'px';
+                    div.style.left = b.x * cellSize + 4 + 'px';
+                    div.style.top = b.y * cellSize + 4 + 'px';
                 }
             };
             div.onpointerup = () => {
-                state.moves++;
-                document.getElementById('moves').innerText = state.moves;
-                if(b.k && b.x === 4) alert("ACCESS GRANTED");
+                if(b.k && b.x === 4) win();
             };
         };
         grid.appendChild(div);
@@ -86,5 +94,30 @@ function checkCollision(x, y, l, o, other) {
     return x < other.x + ow && x + w > other.x && y < other.y + oh && y + h > other.y;
 }
 
-function resetLevel() { state.blocks = JSON.parse(JSON.stringify(state.initial)); render(); }
-generateLevel();
+function win() {
+    state.xp += 500;
+    state.lvl += 1;
+    localStorage.setItem('mk_xp', state.xp);
+    localStorage.setItem('mk_lvl', state.lvl);
+    alert("NODE CLEARED. ACCESSING NEXT LEVEL...");
+    generateLevel();
+    updateUI();
+}
+
+function updateUI() {
+    document.getElementById('lvl-val').innerText = state.lvl;
+    document.getElementById('xp-val').innerText = state.xp.toLocaleString();
+}
+
+function resetLevel() {
+    state.blocks = JSON.parse(JSON.stringify(state.initial));
+    render();
+}
+
+function useHint() {
+    const key = document.querySelector('.block-key');
+    key.style.boxShadow = "0 0 40px var(--gold)";
+    setTimeout(() => key.style.boxShadow = "", 1000);
+}
+
+init();
