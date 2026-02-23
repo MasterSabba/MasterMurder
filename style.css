@@ -1,65 +1,61 @@
 :root {
-    --crimson: #8b0000;
-    --bright-red: #ff0000;
-    --gold: #ffcc00;
-    --cell: 55px;
+    --wood-light: #e0b389;
+    --wood-dark: #8b5a2b;
+    --wood-border: #5d3a1a;
+    --key-gold: #ffcc00;
+    --cell: 50px;
 }
 
 body {
-    background: #050505;
-    color: #eee;
-    font-family: 'Courier New', monospace;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
+    background: #3d2616; /* Sfondo tavolo */
+    margin: 0; display: flex; justify-content: center; align-items: center;
+    height: 100vh; font-family: 'Arial Rounded MT Bold', Arial, sans-serif;
 }
 
-.game-container { width: 350px; text-align: center; }
-
-/* Rank Bar Style */
-.rank-panel { margin-bottom: 20px; }
-.rank-info { display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px; color: var(--crimson); font-weight: bold; }
-.rank-bar-bg { background: #1a1a1a; height: 10px; border: 1px solid var(--crimson); border-radius: 5px; overflow: hidden; }
-.rank-bar-fill { background: var(--bright-red); height: 100%; width: 0%; box-shadow: 0 0 10px var(--bright-red); transition: width 0.5s ease; }
-
-#grid-container {
-    position: relative;
-    padding: 10px;
-    background: #111;
-    border: 2px solid var(--crimson);
+.wood-table {
+    background: #5d3a1a; padding: 20px; border-radius: 20px;
+    box-shadow: inset 0 0 50px rgba(0,0,0,0.5), 0 20px 0 #2d1b0d;
+    text-align: center; width: 340px;
 }
 
-.grid {
-    position: relative;
-    width: calc(var(--cell) * 6);
-    height: calc(var(--cell) * 6);
+.game-logo { color: var(--wood-light); margin: 0 0 10px; font-size: 1.5rem; }
+.game-logo span { color: var(--key-gold); }
+
+.top-bar { display: flex; justify-content: space-between; color: white; margin-bottom: 10px; font-size: 0.9rem; }
+
+.rank-container { margin-bottom: 15px; }
+#rank-name { color: var(--wood-light); font-size: 0.7rem; margin-bottom: 3px; }
+.bar-bg { background: #2d1b0d; height: 8px; border-radius: 4px; overflow: hidden; }
+.bar-fill { background: var(--key-gold); height: 100%; width: 0%; transition: 0.3s; }
+
+.board-frame {
+    position: relative; background: #3d2616; padding: 10px;
+    border: 8px solid var(--wood-border); border-radius: 10px;
+}
+
+.game-grid {
+    position: relative; width: calc(var(--cell) * 6); height: calc(var(--cell) * 6);
+    background: #4e3422; border-radius: 4px;
+}
+
+.exit-slot {
+    position: absolute; right: -15px; top: calc(var(--cell) * 2 + 10px);
+    width: 20px; height: var(--cell); background: #2d1b0d; border-radius: 0 5px 5px 0;
 }
 
 .block {
-    position: absolute;
-    background: #300000;
-    border: 1px solid var(--crimson);
-    border-radius: 4px;
-    cursor: grab;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 5;
+    position: absolute; border-radius: 6px; cursor: grab;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.3), inset 0 2px 2px rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center; touch-action: none;
 }
 
-.key-block { background: linear-gradient(45deg, var(--gold), #886600); border-color: #fff; z-index: 10; }
+.wood-h { background: #b07d4d; border: 2px solid #8b5a2b; }
+.wood-v { background: #96653a; border: 2px solid #5d3a1a; }
+.key-block { background: var(--key-gold); border: 2px solid #b8860b; z-index: 10; font-size: 20px; }
 
-.btn-blood {
-    background: var(--crimson);
-    color: white;
-    border: none;
-    padding: 10px;
-    margin: 5px;
-    cursor: pointer;
-    font-size: 0.7rem;
-    font-weight: bold;
+.wood-btn {
+    background: var(--wood-dark); border: none; color: white;
+    padding: 10px 20px; border-radius: 5px; margin: 10px 5px;
+    font-weight: bold; cursor: pointer; box-shadow: 0 4px 0 #2d1b0d;
 }
-
-.btn-blood:hover { background: var(--bright-red); }
+.wood-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #2d1b0d; }
