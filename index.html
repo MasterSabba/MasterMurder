@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>MasterMurder - Il Gioco dell'Impostore</title>
+    <title>MasterMurder P2P</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
@@ -11,26 +11,34 @@
         <h1>MasterMurder 🔪</h1>
         
         <div id="setup-menu">
-            <button onclick="startBotMode()">Modalità Bot (Offline)</button>
-            <button onclick="startMultiplayer()">Modalità Multiplayer (P2P)</button>
-            <div id="peer-info" class="hidden">
-                <p>Il tuo ID: <span id="my-id">...</span></p>
-                <input type="text" id="join-id" placeholder="ID dell'Host">
-                <button onclick="connectToHost()">Unisciti</button>
+            <input type="text" id="username" placeholder="Tuo Nome">
+            <hr>
+            <button onclick="initPeer(true)">Crea Partita (Host)</button>
+            <div id="host-controls" class="hidden">
+                <p>Invia questo ID agli amici: <b id="my-id">...</b></p>
+                <ul id="lobby-list"></ul>
+                <button onclick="startGame()">INIZIA GIOCO</button>
             </div>
+            <hr>
+            <input type="text" id="join-id" placeholder="ID dell'Host">
+            <button onclick="initPeer(false)">Unisciti a Partita</button>
         </div>
 
         <div id="game-screen" class="hidden">
-            <div id="role-display"></div>
+            <div id="role-card">
+                <h2 id="display-role">Ruolo: ???</h2>
+                <p id="display-word">Parola: ???</p>
+            </div>
             <div id="chat-area"></div>
-            <div id="controls">
-                <input type="text" id="clue-input" placeholder="Scrivi il tuo indizio...">
+            <div id="input-group">
+                <input type="text" id="clue-input" placeholder="Il tuo indizio...">
                 <button onclick="sendClue()">Invia</button>
             </div>
-            <div id="scoreboard">
-                <h3>Classifica (Local Storage)</h3>
-                <ul id="score-list"></ul>
-            </div>
+        </div>
+
+        <div id="scoreboard">
+            <h3>Punteggi Globali (Local Storage)</h3>
+            <ul id="score-list"></ul>
         </div>
     </div>
     <script src="script.js"></script>
