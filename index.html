@@ -3,37 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MasterKey: Hologram</title>
+    <title>NEURAL KEY: OVERRIDE</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="background-city"></div>
-    <div class="scanline"></div>
-
-    <div class="interface">
-        <div class="top-stats">
-            <div class="stat-group">
-                <span class="label">LEVEL: <b id="lvl">188</b></span>
-                <span class="label">XP: <b id="xp">245,300</b></span>
-            </div>
-            <div class="stat-group right">
-                <span class="label">TIME: <b>03:47</b></span>
-                <span class="label">MOVES: <b id="moves">0</b></span>
-            </div>
+    <div class="stars-bg"></div>
+    <div class="game-wrapper">
+        <div class="header">
+            <div class="stat-box">NODE <span id="lvl-val">1</span></div>
+            <div class="stat-box gold">XP <span id="xp-val">0</span></div>
         </div>
 
-        <div class="game-container">
-            <div id="grid" class="holo-board"></div>
-            <div class="exit-portal"></div>
+        <div class="board-area">
+            <div id="grid" class="holo-grid"></div>
+            <div class="exit-gate"></div>
         </div>
 
-        <div class="bottom-menu">
-            <button class="cyber-btn" onclick="resetLevel()">RESET</button>
-            <button class="cyber-btn active" onclick="useHint()">HINT</button>
-            <button class="cyber-btn" onclick="toggleShop()">SKINS</button>
+        <div class="controls">
+            <button class="btn" onclick="resetLevel()">REBOOT</button>
+            <button class="btn hint" onclick="useHint()">SCAN</button>
         </div>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>
