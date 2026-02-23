@@ -3,36 +3,19 @@ const cellSize = 52;
 let blocks = [];
 let initialLayout = [];
 let moves = 0;
-let xp = parseInt(localStorage.getItem('mk_xp_full')) || 0;
-let currentLvl = parseInt(localStorage.getItem('mk_lvl_full')) || 1;
+let xp = parseInt(localStorage.getItem('mk_xp_wood')) || 0;
+let currentLvl = parseInt(localStorage.getItem('mk_lvl_wood')) || 1;
 let timerInterval;
 let seconds = 0;
-
-// Funzione per formattare il tempo
-function formatTime(s) {
-    let min = Math.floor(s / 60);
-    let sec = s % 60;
-    return `${min < 10 ? '0' : ''}${min}:${sec < 10 ? '0' : ''}${sec}`;
-}
-
-// Carica suono (usiamo frequenze sintetiche se non hai file audio)
-const playSound = (freq, type = 'sine', duration = 0.1) => {
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    oscillator.type = type;
-    oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
-    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-    oscillator.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    oscillator.start();
-    oscillator.stop(audioCtx.currentTime + duration);
-};
 
 function updateUI() {
     document.getElementById('lvl').innerText = currentLvl;
     document.getElementById('moves').innerText = moves;
-    document.getElementById('progress-fill').style.width = (xp % 100) + "%";
+    document.getElementById('xp-counter').innerText = xp + " XP";
+    
+    // La barra si riempie ogni 100 XP
+    let progress = xp % 100;
+    document.getElementById('progress-fill').style.width = progress + "%";
     
     const ranks = ["WOOD NOVICE", "CARPENTER", "LOCKSMITH", "KEY MASTER", "LEGEND"];
     document.getElementById('rank-label').innerText = ranks[Math.min(Math.floor(xp/100), 4)];
@@ -42,11 +25,10 @@ function generateLevel() {
     moves = 0;
     seconds = 0;
     grid.innerHTML = '';
+    clearInterval(timerInterval);
     
-    // Difficoltà: aumenta ostacoli ogni 2 livelli
-    let obstacleCount = 4 + Math.min(Math.floor(currentLvl / 2), 8);
-    
-    // Layout iniziale: La Chiave d'Oro
+    // Difficoltà dinamica
+    let obstacleCount = 4 + Math.min(Math.floor(currentLvl / 2), 10);
     let layout = [{ x: 0, y: 2, l: 2, o: 'h', k: true }];
     
     let attempts = 0;
@@ -57,9 +39,9 @@ function generateLevel() {
         let x = Math.floor(Math.random() * (6 - (o === 'h' ? l : 0)));
         let y = Math.floor(Math.random() * (6 - (o === 'v' ? l : 0)));
 
-        // Verifica che non si sovrapponga e non blocchi l'uscita immediata nei primi livelli
         if (!layout.some(b => checkCollision(x, y, l, o, b))) {
-            if (o === 'v' && x > 1 && y <= 2 && y + l > 2 && currentLvl < 3) continue;
+            // Evita di bloccare l'uscita nei primissimi livelli
+            if (currentLvl < 3 && x > 3 && o === 'v') continue;
             layout.push({ x, y, l, o, k: false });
         }
     }
@@ -74,40 +56,39 @@ function generateLevel() {
 function render() {
     grid.innerHTML = '';
     blocks.forEach((b, i) => {
-        const el = document.createElement('div');
-        el.className = `block ${b.k ? 'block-key' : (b.o === 'h' ? 'block-h' : 'block-v')}`;
-        el.style.width = (b.o === 'h' ? b.l * cellSize : cellSize) - 8 + 'px';
-        el.style.height = (b.o === 'v' ? b.l * cellSize : cellSize) - 8 + 'px';
-        el.style.left = b.x * cellSize + 4 + 'px';
-        el.style.top = b.y * cellSize + 4 + 'px';
-        if(b.k) el.innerHTML = '🔑';
+        const div = document.createElement('div');
+        div.className = `block ${b.k ? 'block-key' : (b.o === 'h' ? 'block-h' : 'block-v')}`;
+        div.style.width = (b.o === 'h' ? b.l * cellSize : cellSize) - 8 + 'px';
+        div.style.height = (b.o === 'v' ? b.l * cellSize : cellSize) - 8 + 'px';
+        div.style.left = b.x * cellSize + 4 + 'px';
+        div.style.top = b.y * cellSize + 4 + 'px';
+        if(b.k) div.innerHTML = '🔑';
 
-        el.onpointerdown = (e) => {
-            el.setPointerCapture(e.pointerId);
+        div.onpointerdown = (e) => {
+            div.setPointerCapture(e.pointerId);
             let startCoord = b.o === 'h' ? e.clientX : e.clientY;
             let startPos = b.o === 'h' ? b.x : b.y;
 
-            el.onpointermove = (em) => {
+            div.onpointermove = (em) => {
                 let currentCoord = b.o === 'h' ? em.clientX : em.clientY;
                 let diff = Math.round((currentCoord - startCoord) / cellSize);
                 let target = startPos + diff;
 
                 if (canMoveTo(i, target)) {
                     if (b.o === 'h') b.x = target; else b.y = target;
-                    el.style.left = b.x * cellSize + 4 + 'px';
-                    el.style.top = b.y * cellSize + 4 + 'px';
+                    div.style.left = b.x * cellSize + 4 + 'px';
+                    div.style.top = b.y * cellSize + 4 + 'px';
                 }
             };
 
-            el.onpointerup = () => {
-                el.onpointermove = null;
+            div.onpointerup = () => {
+                div.onpointermove = null;
                 moves++;
                 document.getElementById('moves').innerText = moves;
-                playSound(200 + (moves * 10), 'triangle', 0.05);
                 if (b.k && b.x === 4) handleWin();
             };
         };
-        grid.appendChild(el);
+        grid.appendChild(div);
     });
 }
 
@@ -128,26 +109,50 @@ function checkCollision(x, y, l, o, other) {
     return x < other.x + ow && x + w > other.x && y < other.y + oh && y + h > other.y;
 }
 
-function startTimer() {
-    clearInterval(timerInterval);
-    timerInterval = setInterval(() => {
-        seconds++;
-        document.getElementById('timer').innerText = formatTime(seconds);
-    }, 1000);
+function useHint() {
+    if (xp < 20) {
+        alert("Non hai abbastanza XP!");
+        return;
+    }
+    
+    // Trova un blocco che può muoversi
+    for (let i = 0; i < blocks.length; i++) {
+        let b = blocks[i];
+        let originalPos = b.o === 'h' ? b.x : b.y;
+        if (canMoveTo(i, originalPos + 1) || canMoveTo(i, originalPos - 1)) {
+            xp -= 20;
+            localStorage.setItem('mk_xp_wood', xp);
+            updateUI();
+            
+            // Evidenzia il blocco
+            const el = grid.children[i];
+            el.classList.add('block-hint');
+            setTimeout(() => el.classList.remove('block-hint'), 1000);
+            return;
+        }
+    }
 }
 
 function handleWin() {
     clearInterval(timerInterval);
-    playSound(600, 'sine', 0.3);
-    xp += 20;
+    xp += 25;
     currentLvl++;
-    localStorage.setItem('mk_xp_full', xp);
-    localStorage.setItem('mk_lvl_full', currentLvl);
+    localStorage.setItem('mk_xp_wood', xp);
+    localStorage.setItem('mk_lvl_wood', currentLvl);
     
     setTimeout(() => {
-        alert(`VITTORIA! Tempo: ${formatTime(seconds)}`);
+        alert("LIVELLO COMPLETATO! +25 XP");
         generateLevel();
-    }, 300);
+    }, 200);
+}
+
+function startTimer() {
+    timerInterval = setInterval(() => {
+        seconds++;
+        let m = Math.floor(seconds / 60);
+        let s = seconds % 60;
+        document.getElementById('timer').innerText = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+    }, 1000);
 }
 
 function resetCurrentLevel() {
@@ -157,9 +162,4 @@ function resetCurrentLevel() {
     updateUI();
 }
 
-function toggleTheme() {
-    document.body.classList.toggle('theme-light');
-}
-
-// Inizializzazione
 generateLevel();
