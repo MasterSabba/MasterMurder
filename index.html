@@ -3,37 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MasterKey | Gold Edition</title>
+    <title>MasterKey | Expanded Edition</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <div class="app-container">
-        <header>
+<body class="theme-dark">
+    <div class="table-surface">
+        <div class="game-frame">
+            <div class="theme-switcher" onclick="toggleTheme()"></div>
+
             <div class="logo">MASTER<span>KEY</span></div>
-            <div class="xp-badge">XP <span id="xp-val">0</span></div>
-        </header>
-
-        <div class="game-card">
-            <div class="info-row">
-                <div class="info-item">LIVELLO <b id="lvl-num">1</b></div>
-                <div class="info-item">MOSSE <b id="move-num">0</b></div>
-            </div>
             
-            <div id="board-container">
-                <div id="grid" class="grid"></div>
-                <div class="exit-light"></div>
+            <div class="header-ui">
+                <div class="stat-item">LVL <span id="lvl">1</span></div>
+                <div class="stat-item">MOVES <span id="moves">0</span></div>
+                <div class="stat-item">TIME <span id="timer">00:00</span></div>
             </div>
 
-            <div class="rank-box">
-                <span id="rank-name">NOVICE</span>
-                <div class="progress-track"><div id="rank-fill" class="progress-fill"></div></div>
+            <div class="board-container">
+                <div id="grid" class="game-grid"></div>
+                <div class="exit-zone"></div>
+            </div>
+
+            <div class="rank-area">
+                <span id="rank-label">WOOD NOVICE</span>
+                <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+            </div>
+
+            <div class="controls-panel">
+                <button class="btn-action" onclick="resetCurrentLevel()">RESTART</button>
+                <button class="btn-action" onclick="useHint()">HINT (-20XP)</button>
             </div>
         </div>
 
-        <div class="controls">
-            <button class="btn-secondary" onclick="resetLevel()">RESTART</button>
-            <button class="btn-primary" onclick="nextLevel()">SKIP / NEXT</button>
-        </div>
+        <div class="xp-feedback hidden"></div>
+
+        <audio id="move-sfx" src="https://assets.mixkit.co/sfx/preview/mixkit-software-interface-click-tone-2576.mp3"></audio>
+        <audio id="win-sfx" src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3"></audio>
+        <audio id="collision-sfx" src="https://assets.mixkit.co/sfx/preview/mixkit-short-slap-2007.mp3"></audio>
+        <audio id="hint-sfx" src="https://assets.mixkit.co/sfx/preview/mixkit-sci-fi-bonus-item-sound-2810.mp3"></audio>
     </div>
     <script src="script.js"></script>
 </body>
