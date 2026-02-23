@@ -3,54 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MasterMurder - Crimson Edition</title>
+    <title>MasterKey - Procedural Escape</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 </head>
 <body>
-    <div class="blood-container">
-        <h1 class="murder-title">MASTER<span>MURDER</span></h1>
-
-        <div id="setup-screen" class="terminal-card">
-            <div class="status-header">
-                <span id="connection-led" class="led-dead"></span>
-                <span id="status-text">SYSTEM_BLEEDING...</span>
+    <div class="game-container">
+        <h1 class="title">MASTER<span>KEY</span></h1>
+        
+        <div class="rank-panel">
+            <div class="rank-info">
+                <span id="rank-title">NOVICE</span>
+                <span id="xp-text">0 / 100 XP</span>
             </div>
-            
-            <div id="my-id" class="id-display">----</div>
-            <button class="btn-action" onclick="copyId()">COPY ACCESS_CODE</button>
-
-            <div class="xp-container">
-                <div class="xp-bar-bg"><div id="xp-fill" class="xp-bar-fill"></div></div>
-                <div id="xp-label" class="xp-label">BLOOD_SPILLED: 0</div>
-            </div>
-
-            <div id="auth-section">
-                <input type="text" id="peer-id-input" placeholder="ENTER TARGET CODE">
-                <button class="btn-main" onclick="initPeer(false)">JOIN MISSION</button>
-                <button class="btn-main" onclick="initPeer(true)">HOST MURDER</button>
-                <button class="btn-bot" onclick="startBotMode()">TRAINING_ROOM (BOTS)</button>
-            </div>
-
-            <div id="lobby-section" class="hidden">
-                <h3 class="red-text">VICTIMS_IN_LOBBY:</h3>
-                <ul id="player-list"></ul>
-                <button id="start-btn" class="btn-main hidden" onclick="hostStartGame()">EXECUTE START</button>
+            <div class="rank-bar-bg">
+                <div id="rank-fill" class="rank-bar-fill"></div>
             </div>
         </div>
 
-        <div id="game-screen" class="terminal-card hidden">
-            <div class="role-reveal">
-                <div id="role-tag">YOUR_STATUS:</div>
-                <div id="secret-word">ANALYZING...</div>
-            </div>
+        <div id="grid-container">
+            <div id="grid" class="grid"></div>
+            <div class="exit-gate"></div>
+        </div>
 
-            <div id="murder-logs"></div>
-
-            <div class="input-area">
-                <input type="text" id="clue-input" placeholder="TYPE CLUE...">
-                <button class="btn-send" onclick="sendClue()">SEND</button>
-            </div>
+        <div class="controls">
+            <div class="stat-box">MOVES: <span id="move-count">0</span></div>
+            <button class="btn-blood" onclick="generateRandomLevel()">NEW RANDOM LEVEL</button>
+            <button class="btn-blood" onclick="resetLevel()">RESET</button>
         </div>
     </div>
     <script src="script.js"></script>
