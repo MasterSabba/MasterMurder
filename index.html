@@ -3,57 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NEON KEY | Cyber System</title>
+    <title>MasterKey: Hologram</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="cyber-city-bg"></div> <div class="hud-container">
-        <header class="top-hud">
-            <div class="hud-box">
-                <span class="label">LEVEL:</span>
-                <span id="lvl" class="value">188</span>
-            </div>
-            <div class="hud-box">
-                <span class="label">XP:</span>
-                <span id="xp" class="value">245,300</span>
-            </div>
-        </header>
+    <div class="background-city"></div>
+    <div class="scanline"></div>
 
-        <main class="game-frame">
-            <div class="scan-line"></div>
-            <div id="grid" class="holo-grid"></div>
+    <div class="interface">
+        <div class="top-stats">
+            <div class="stat-group">
+                <span class="label">LEVEL: <b id="lvl">188</b></span>
+                <span class="label">XP: <b id="xp">245,300</b></span>
+            </div>
+            <div class="stat-group right">
+                <span class="label">TIME: <b>03:47</b></span>
+                <span class="label">MOVES: <b id="moves">0</b></span>
+            </div>
+        </div>
+
+        <div class="game-container">
+            <div id="grid" class="holo-board"></div>
             <div class="exit-portal"></div>
-        </main>
+        </div>
 
-        <footer class="bottom-hud">
-            <div class="stats-mini">
-                <span>TIME: <b id="timer">03:47</b></span>
-                <span>MOVES: <b id="moves">89</b></span>
-            </div>
-            <div class="control-grid">
-                <button class="btn-cyber" onclick="resetLevel()">
-                    <div class="btn-icon">♻️</div> RESET
-                </button>
-                <button class="btn-cyber active" onclick="useHint()">
-                    <div class="btn-icon">👁️</div> HINT
-                </button>
-                <button class="btn-cyber" onclick="toggleShop()">
-                    <div class="btn-icon">💎</div> SKINS
-                </button>
-            </div>
-        </footer>
-    </div>
-
-    <div id="shop" class="modal hidden">
-        <div class="modal-content glass">
-            <h2>DATA BANK: SKINS</h2>
-            <div class="skin-card" onclick="buySkin('glass', 0)">
-                <span>CYBER GLASS</span> <span class="price">EQUIPPED</span>
-            </div>
-            <div class="skin-card locked" onclick="buySkin('plasma', 5000)">
-                <span>PLASMA CORE</span> <span class="price">5,000 XP</span>
-            </div>
-            <button class="btn-cyber" onclick="toggleShop()">BACK</button>
+        <div class="bottom-menu">
+            <button class="cyber-btn" onclick="resetLevel()">RESET</button>
+            <button class="cyber-btn active" onclick="useHint()">HINT</button>
+            <button class="cyber-btn" onclick="toggleShop()">SKINS</button>
         </div>
     </div>
 
