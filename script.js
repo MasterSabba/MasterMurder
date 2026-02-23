@@ -1,33 +1,26 @@
 const grid = document.getElementById('grid');
-const cellSize = 50;
+const cellSize = 52;
 let state = {
-    xp: parseInt(localStorage.getItem('mk_xp')) || 0,
-    lvl: parseInt(localStorage.getItem('mk_lvl')) || 1,
-    skin: localStorage.getItem('mk_skin') || 'wood',
-    unlocked: JSON.parse(localStorage.getItem('mk_unlocked')) || ['wood'],
-    blocks: [],
-    initial: []
+    xp: 245300, lvl: 188, moves: 0,
+    blocks: [], initial: []
 };
 
-function init() {
-    document.body.className = 'skin-' + state.skin;
-    generateLevel();
-    updateUI();
-}
-
-function generateLevel() {
-    let layout = [{x: 0, y: 2, l: 2, o: 'h', k: true}];
-    // Molti più pezzi: 10 ostacoli + chiave
-    let count = 10 + Math.min(Math.floor(state.lvl / 3), 6); 
+// Generatore di livelli "Possibili" ma densi
+function generateValidLevel() {
+    let layout = [{x: 0, y: 2, l: 2, o: 'h', k: true}]; // Chiave
+    let count = 12; // Tanti pezzi come nell'immagine
 
     for(let i=0; i<count; i++) {
         let attempts = 0;
-        while(attempts < 200) {
+        while(attempts < 100) {
             attempts++;
-            let l = Math.random() > 0.7 ? 3 : 2;
+            let l = Math.random() > 0.8 ? 3 : 2;
             let o = Math.random() > 0.5 ? 'h' : 'v';
             let x = Math.floor(Math.random() * (6 - (o === 'h' ? l : 0)));
             let y = Math.floor(Math.random() * (6 - (o === 'v' ? l : 0)));
+
+            // Verifica che il pezzo non blocchi l'uscita in modo permanente
+            if (o === 'v' && x > 3 && y === 2) continue; 
 
             if(!layout.some(b => checkCollision(x, y, l, o, b))) {
                 layout.push({x, y, l, o, k: false});
@@ -49,18 +42,15 @@ function render() {
         div.style.height = (b.o === 'v' ? b.l * cellSize : cellSize) - 6 + 'px';
         div.style.left = b.x * cellSize + 3 + 'px';
         div.style.top = b.y * cellSize + 3 + 'px';
-        if(b.k) div.innerText = "🗝️";
 
         div.onpointerdown = (e) => {
-            e.preventDefault(); // Blocca scroll durante il tocco
             div.setPointerCapture(e.pointerId);
-            let startX = e.clientX, startY = e.clientY;
-            let ox = b.x, oy = b.y;
+            let start = b.o === 'h' ? e.clientX : e.clientY;
+            let pos = b.o === 'h' ? b.x : b.y;
 
             div.onpointermove = (em) => {
-                let diff = b.o === 'h' ? (em.clientX - startX) : (em.clientY - startY);
-                let target = (b.o === 'h' ? ox : oy) + Math.round(diff / cellSize);
-                
+                let current = b.o === 'h' ? em.clientX : em.clientY;
+                let target = pos + Math.round((current - start) / cellSize);
                 if(canMove(i, target)) {
                     if(b.o === 'h') b.x = target; else b.y = target;
                     div.style.left = b.x * cellSize + 3 + 'px';
@@ -68,15 +58,15 @@ function render() {
                 }
             };
             div.onpointerup = () => {
-                div.onpointermove = null;
-                if(b.k && b.x === 4) win();
+                state.moves++;
+                document.getElementById('moves').innerText = state.moves;
+                if(b.k && b.x === 4) alert("SYSTEM OVERRIDE: SUCCESS");
             };
         };
         grid.appendChild(div);
     });
 }
 
-// (Le funzioni canMove, checkCollision e updateUI restano simili alle precedenti)
 function canMove(idx, val) {
     const b = state.blocks[idx];
     if(val < 0 || val + b.l > 6) return false;
@@ -97,50 +87,6 @@ function checkCollision(x, y, l, o, other) {
     return x < other.x + ow && x + w > other.x && y < other.y + oh && y + h > other.y;
 }
 
-function win() {
-    state.xp += 50;
-    state.lvl++;
-    save();
-    alert("Vittoria! +50 XP");
-    generateLevel();
-    updateUI();
-}
-
-function save() {
-    localStorage.setItem('mk_xp', state.xp);
-    localStorage.setItem('mk_lvl', state.lvl);
-    localStorage.setItem('mk_skin', state.skin);
-    localStorage.setItem('mk_unlocked', JSON.stringify(state.unlocked));
-}
-
-function buySkin(name, cost) {
-    if(state.unlocked.includes(name)) {
-        state.skin = name;
-    } else if(state.xp >= cost) {
-        state.xp -= cost;
-        state.unlocked.push(name);
-        state.skin = name;
-    } else {
-        return alert("XP insufficienti per questa skin!");
-    }
-    save();
-    init();
-    toggleShop();
-}
-
-function toggleShop() { document.getElementById('shop').classList.toggle('hidden'); }
-function updateUI() {
-    document.getElementById('lvl').innerText = state.lvl;
-    document.getElementById('xp').innerText = state.xp;
-    document.getElementById('xp-bar').style.width = (state.xp % 100) + "%";
-}
 function resetLevel() { state.blocks = JSON.parse(JSON.stringify(state.initial)); render(); }
-function useHint() {
-    if(state.xp < 50) return alert("Ti servono 50 XP!");
-    state.xp -= 50; updateUI();
-    const key = grid.querySelector('.block-key');
-    key.style.filter = "brightness(3)";
-    setTimeout(() => key.style.filter = "", 800);
-}
 
-init();
+generateValidLevel();
