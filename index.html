@@ -3,32 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MasterKey - Procedural Escape</title>
+    <title>MasterKey Wood Edition</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="game-container">
-        <h1 class="title">MASTER<span>KEY</span></h1>
+    <div class="wood-table">
+        <h1 class="game-logo">MASTER<span>KEY</span></h1>
         
-        <div class="rank-panel">
-            <div class="rank-info">
-                <span id="rank-title">NOVICE</span>
-                <span id="xp-text">0 / 100 XP</span>
-            </div>
-            <div class="rank-bar-bg">
-                <div id="rank-fill" class="rank-bar-fill"></div>
-            </div>
+        <div class="top-bar">
+            <div class="stat">LEVEL: <span id="lvl-display">1</span></div>
+            <div class="stat">MOVES: <span id="move-display">0</span></div>
         </div>
 
-        <div id="grid-container">
-            <div id="grid" class="grid"></div>
-            <div class="exit-gate"></div>
+        <div class="rank-container">
+            <div id="rank-name">NOVICE</div>
+            <div class="bar-bg"><div id="rank-fill" class="bar-fill"></div></div>
         </div>
 
-        <div class="controls">
-            <div class="stat-box">MOVES: <span id="move-count">0</span></div>
-            <button class="btn-blood" onclick="generateRandomLevel()">NEW RANDOM LEVEL</button>
-            <button class="btn-blood" onclick="resetLevel()">RESET</button>
+        <div class="board-frame">
+            <div id="grid" class="game-grid"></div>
+            <div class="exit-slot"></div>
+        </div>
+
+        <div class="actions">
+            <button class="wood-btn" onclick="resetLevel()">RESET</button>
+            <button class="wood-btn" onclick="nextLevel()">NEXT</button>
         </div>
     </div>
     <script src="script.js"></script>
