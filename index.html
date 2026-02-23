@@ -3,46 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MasterKey: Wood Legacy</title>
+    <title>NEON KEY | Cyber System</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="game-container">
-        <div class="header">
-            <div class="info">
-                <span>LIVELLO <b id="lvl">1</b></span>
-                <span>XP <b id="xp">0</b></span>
+    <div class="cyber-city-bg"></div> <div class="hud-container">
+        <header class="top-hud">
+            <div class="hud-box">
+                <span class="label">LEVEL:</span>
+                <span id="lvl" class="value">188</span>
             </div>
-            <button class="btn-shop" onclick="toggleShop()">🛒 SHOP</button>
-        </div>
-
-        <div class="board-frame">
-            <div id="grid" class="board"></div>
-            <div class="exit-slot"></div>
-        </div>
-
-        <div class="footer">
-            <div class="xp-progress"><div id="xp-bar" class="fill"></div></div>
-            <div class="controls">
-                <button class="btn" onclick="resetLevel()">RESET</button>
-                <button class="btn hint" onclick="useHint()">HINT (50 XP)</button>
+            <div class="hud-box">
+                <span class="label">XP:</span>
+                <span id="xp" class="value">245,300</span>
             </div>
-        </div>
+        </header>
+
+        <main class="game-frame">
+            <div class="scan-line"></div>
+            <div id="grid" class="holo-grid"></div>
+            <div class="exit-portal"></div>
+        </main>
+
+        <footer class="bottom-hud">
+            <div class="stats-mini">
+                <span>TIME: <b id="timer">03:47</b></span>
+                <span>MOVES: <b id="moves">89</b></span>
+            </div>
+            <div class="control-grid">
+                <button class="btn-cyber" onclick="resetLevel()">
+                    <div class="btn-icon">♻️</div> RESET
+                </button>
+                <button class="btn-cyber active" onclick="useHint()">
+                    <div class="btn-icon">👁️</div> HINT
+                </button>
+                <button class="btn-cyber" onclick="toggleShop()">
+                    <div class="btn-icon">💎</div> SKINS
+                </button>
+            </div>
+        </footer>
     </div>
 
     <div id="shop" class="modal hidden">
-        <div class="modal-content">
-            <h3>MERCANTE DI SKIN</h3>
-            <div class="skin-item" onclick="buySkin('wood', 0)">
-                <span>Legno Base</span> <span>GRATIS</span>
+        <div class="modal-content glass">
+            <h2>DATA BANK: SKINS</h2>
+            <div class="skin-card" onclick="buySkin('glass', 0)">
+                <span>CYBER GLASS</span> <span class="price">EQUIPPED</span>
             </div>
-            <div class="skin-item" onclick="buySkin('marble', 1500)">
-                <span>Marmo Bianco</span> <span>1500 XP</span>
+            <div class="skin-card locked" onclick="buySkin('plasma', 5000)">
+                <span>PLASMA CORE</span> <span class="price">5,000 XP</span>
             </div>
-            <div class="skin-item" onclick="buySkin('obsidian', 3000)">
-                <span>Ossidiana</span> <span>3000 XP</span>
-            </div>
-            <button class="btn" onclick="toggleShop()">CHIUDI</button>
+            <button class="btn-cyber" onclick="toggleShop()">BACK</button>
         </div>
     </div>
 
