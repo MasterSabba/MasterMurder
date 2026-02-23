@@ -1,92 +1,111 @@
-let peer, conn;
-let myRole = "";
-let myWord = "";
-let players = []; // {id, name, score, isBot}
+let peer, connections = [];
+let myName = "";
+let isHost = false;
+let gameState = { players: [], secretWord: "", impostorWord: "", impostorIndex: -1 };
 
-const WORDS_DATABASE = [
-    { secret: "Pizza", impostor: "Focaccia" },
-    { secret: "Gatto", impostor: "Tigre" },
-    { secret: "Computer", impostor: "Calcolatrice" }
+// Database parole: Segreta vs Impostore
+const WORD_PAIRS = [
+    { s: "Pizza", i: "Focaccia" },
+    { s: "Gatto", i: "Cane" },
+    { s: "Smartphone", i: "Tablet" },
+    { s: "Mare", i: "Piscina" }
 ];
 
-// --- LOGICA SALVATAGGIO PUNTI (Local Storage) ---
-function updateScore(playerName, points) {
+function initPeer(asHost) {
+    myName = document.getElementById('username').value || "Giocatore_" + Math.floor(Math.random()*100);
+    isHost = asHost;
+    peer = new Peer();
+
+    peer.on('open', (id) => {
+        if(isHost) {
+            document.getElementById('my-id').innerText = id;
+            document.getElementById('host-controls').classList.remove('hidden');
+            addPlayerToLobby(myName, peer.id);
+        } else {
+            const hostId = document.getElementById('join-id').value;
+            const conn = peer.connect(hostId);
+            setupConnection(conn);
+        }
+    });
+
+    peer.on('connection', (conn) => {
+        setupConnection(conn);
+    });
+}
+
+function setupConnection(conn) {
+    connections.push(conn);
+    conn.on('data', (data) => {
+        if (data.type === "LOBBY_UPDATE") updateLobbyUI(data.players);
+        if (data.type === "START_GAME") renderGame(data);
+        if (data.type === "CLUE") addMessage(data.sender, data.text);
+        if (data.type === "JOIN") {
+            addPlayerToLobby(data.name, conn.peer);
+            broadcast({ type: "LOBBY_UPDATE", players: gameState.players });
+        }
+    });
+
+    conn.on('open', () => {
+        if (!isHost) conn.send({ type: "JOIN", name: myName });
+    });
+}
+
+function addPlayerToLobby(name, id) {
+    gameState.players.push({ name, id });
+    updateLobbyUI(gameState.players);
+}
+
+function updateLobbyUI(players) {
+    const list = document.getElementById('lobby-list');
+    list.innerHTML = players.map(p => `<li>${p.name} ✅</li>`).join('');
+}
+
+function startGame() {
+    if (gameState.players.length < 2) return alert("Servono almeno 2 persone (o bot)!");
+    
+    const pair = WORD_PAIRS[Math.floor(Math.random() * WORD_PAIRS.length)];
+    const impIndex = Math.floor(Math.random() * gameState.players.length);
+
+    gameState.players.forEach((p, index) => {
+        const payload = {
+            type: "START_GAME",
+            role: (index === impIndex) ? "IMPOSTORE" : "INNOCENTE",
+            word: (index === impIndex) ? pair.i : pair.s
+        };
+        
+        if (p.id === peer.id) renderGame(payload);
+        else {
+            const c = connections.find(conn => conn.peer === p.id);
+            if(c) c.send(payload);
+        }
+    });
+}
+
+function renderGame(data) {
+    document.getElementById('setup-menu').classList.add('hidden');
+    document.getElementById('game-screen').classList.remove('hidden');
+    document.getElementById('display-role').innerText = "Ruolo: " + data.role;
+    document.getElementById('display-word').innerText = "Parola: " + data.word;
+    
+    // Salvataggio automatico partecipazione (Local Storage)
     let scores = JSON.parse(localStorage.getItem('masterMurder_scores')) || {};
-    scores[playerName] = (scores[playerName] || 0) + points;
+    scores[myName] = (scores[myName] || 0) + 1; // 1 punto solo per aver iniziato
     localStorage.setItem('masterMurder_scores', JSON.stringify(scores));
     renderScoreboard();
 }
 
-function renderScoreboard() {
-    const list = document.getElementById('score-list');
-    const scores = JSON.parse(localStorage.getItem('masterMurder_scores')) || {};
-    list.innerHTML = Object.entries(scores)
-        .map(([name, pts]) => `<li>${name}: ${pts} pt</li>`)
-        .join('');
-}
-
-// --- MODALITÀ BOT ---
-function startBotMode() {
-    document.getElementById('setup-menu').classList.add('hidden');
-    document.getElementById('game-screen').classList.remove('hidden');
-    
-    const game = WORDS_DATABASE[Math.floor(Math.random() * WORDS_DATABASE.length)];
-    const isImpostor = Math.random() < 0.25;
-    
-    myRole = isImpostor ? "Impostore" : "Innocente";
-    myWord = isImpostor ? game.impostor : game.secret;
-    
-    document.getElementById('role-display').innerHTML = `
-        <h2>Sei: ${myRole}</h2>
-        <p>La tua parola è: <strong>${myWord}</strong></p>
-    `;
-
-    // Simuliamo 3 bot
-    for(let i=1; i<=3; i++) {
-        players.push({ name: "Bot " + i, isBot: true });
-    }
-    renderScoreboard();
-}
-
-// --- MODALITÀ MULTIPLAYER (PEERJS) ---
-function startMultiplayer() {
-    document.getElementById('peer-info').classList.remove('hidden');
-    peer = new Peer();
-
-    peer.on('open', (id) => {
-        document.getElementById('my-id').innerText = id;
-    });
-
-    peer.on('connection', (c) => {
-        conn = c;
-        setupChat();
-        alert("Giocatore connesso!");
-    });
-}
-
-function connectToHost() {
-    const hostId = document.getElementById('join-id').value;
-    conn = peer.connect(hostId);
-    setupChat();
-}
-
-function setupChat() {
-    conn.on('data', (data) => {
-        addMessage("Compagno", data);
-    });
-}
-
 function sendClue() {
-    const input = document.getElementById('clue-input');
-    const msg = input.value;
-    if(!msg) return;
-
-    addMessage("Tu", msg);
-    if(conn) conn.send(msg);
+    const val = document.getElementById('clue-input').value;
+    if(!val) return;
     
-    // Esempio: Se indovini o vinci round, salva punti
-    updateScore("Giocatore1", 10); 
-    input.value = "";
+    const msg = { type: "CLUE", sender: myName, text: val };
+    addMessage("Tu", val);
+    broadcast(msg);
+    document.getElementById('clue-input').value = "";
+}
+
+function broadcast(data) {
+    connections.forEach(c => c.send(data));
 }
 
 function addMessage(sender, text) {
@@ -95,5 +114,12 @@ function addMessage(sender, text) {
     chat.scrollTop = chat.scrollHeight;
 }
 
-// Inizializza la classifica all'avvio
+function renderScoreboard() {
+    const list = document.getElementById('score-list');
+    const scores = JSON.parse(localStorage.getItem('masterMurder_scores')) || {};
+    list.innerHTML = Object.entries(scores)
+        .sort((a,b) => b[1] - a[1])
+        .map(([n, p]) => `<li>${n}: ${p} pt</li>`).join('');
+}
+
 window.onload = renderScoreboard;
