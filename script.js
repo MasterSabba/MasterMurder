@@ -1,81 +1,90 @@
-:root {
-    --cyan: #00f3ff;
-    --magenta: #ff00ff;
-    --gold: #ffcc00;
-    --cell: 52px;
+const grid = document.getElementById('grid');
+const cellSize = 52;
+let state = {
+    xp: 245300, lvl: 188, moves: 0,
+    blocks: [], initial: []
+};
+
+function generateLevel() {
+    // Generiamo 12 pezzi per avere la densità dell'immagine
+    let layout = [{x: 0, y: 2, l: 2, o: 'h', k: true}];
+    let count = 12;
+
+    for(let i=0; i<count; i++) {
+        let attempts = 0;
+        while(attempts < 150) {
+            attempts++;
+            let l = Math.random() > 0.8 ? 3 : 2;
+            let o = Math.random() > 0.5 ? 'h' : 'v';
+            let x = Math.floor(Math.random() * (6 - (o === 'h' ? l : 0)));
+            let y = Math.floor(Math.random() * (6 - (o === 'v' ? l : 0)));
+
+            // Evitiamo blocchi impossibili davanti all'uscita
+            if (o === 'v' && x > 3 && y === 2) continue;
+
+            if(!layout.some(b => checkCollision(x, y, l, o, b))) {
+                layout.push({x, y, l, o, k: false});
+                break;
+            }
+        }
+    }
+    state.blocks = layout;
+    state.initial = JSON.parse(JSON.stringify(layout));
+    render();
 }
 
-body, html {
-    margin: 0; padding: 0; width: 100vw; height: 100vh;
-    overflow: hidden; background: #000; font-family: 'Courier New', monospace;
-    touch-action: none;
+function render() {
+    grid.innerHTML = '';
+    state.blocks.forEach((b, i) => {
+        const div = document.createElement('div');
+        div.className = `block ${b.k ? 'block-key' : (b.o === 'h' ? 'block-h' : 'block-v')}`;
+        div.style.width = (b.o === 'h' ? b.l * cellSize : cellSize) - 4 + 'px';
+        div.style.height = (b.o === 'v' ? b.l * cellSize : cellSize) - 4 + 'px';
+        div.style.left = b.x * cellSize + 2 + 'px';
+        div.style.top = b.y * cellSize + 2 + 'px';
+
+        div.onpointerdown = (e) => {
+            div.setPointerCapture(e.pointerId);
+            let start = b.o === 'h' ? e.clientX : e.clientY;
+            let origin = b.o === 'h' ? b.x : b.y;
+
+            div.onpointermove = (em) => {
+                let target = origin + Math.round(((b.o === 'h' ? em.clientX : em.clientY) - start) / cellSize);
+                if(canMove(i, target)) {
+                    if(b.o === 'h') b.x = target; else b.y = target;
+                    div.style.left = b.x * cellSize + 2 + 'px';
+                    div.style.top = b.y * cellSize + 2 + 'px';
+                }
+            };
+            div.onpointerup = () => {
+                state.moves++;
+                document.getElementById('moves').innerText = state.moves;
+                if(b.k && b.x === 4) alert("ACCESS GRANTED");
+            };
+        };
+        grid.appendChild(div);
+    });
 }
 
-/* Sfondo con profondità */
-.background-city {
-    position: fixed; inset: 0;
-    background: url('https://images.unsplash.com/photo-1605142859862-978be7eba909?auto=format&fit=crop&w=1500&q=80');
-    background-size: cover; background-position: center;
-    filter: blur(8px) brightness(0.3); z-index: -1;
+function canMove(idx, val) {
+    const b = state.blocks[idx];
+    if(val < 0 || val + b.l > 6) return false;
+    return !state.blocks.some((other, i) => {
+        if(i === idx) return false;
+        let nx = b.o === 'h' ? val : b.x;
+        let ny = b.o === 'v' ? val : b.y;
+        return nx < other.x + (other.o === 'h' ? other.l : 1) &&
+               nx + (b.o === 'h' ? b.l : 1) > other.x &&
+               ny < other.y + (other.o === 'v' ? other.l : 1) &&
+               ny + (b.o === 'v' ? b.l : 1) > other.y;
+    });
 }
 
-.interface {
-    height: 100vh; display: flex; flex-direction: column;
-    justify-content: space-around; align-items: center;
-    padding: 10px;
+function checkCollision(x, y, l, o, other) {
+    let w = o === 'h' ? l : 1, h = o === 'v' ? l : 1;
+    let ow = other.o === 'h' ? other.l : 1, oh = other.o === 'v' ? other.l : 1;
+    return x < other.x + ow && x + w > other.x && y < other.y + oh && y + h > other.y;
 }
 
-/* Board Olografica */
-.holo-board {
-    width: 312px; height: 312px; position: relative;
-    border: 2px solid var(--cyan);
-    background: rgba(0, 243, 255, 0.05);
-    box-shadow: 0 0 30px rgba(0, 243, 255, 0.2), inset 0 0 20px rgba(0, 243, 255, 0.1);
-}
-
-.holo-board::before {
-    content: ""; position: absolute; inset: 0;
-    background-image: linear-gradient(var(--cyan) 1px, transparent 1px),
-                      linear-gradient(90deg, var(--cyan) 1px, transparent 1px);
-    background-size: 52px 52px; opacity: 0.3;
-}
-
-/* BLOCCHI HI-TECH */
-.block {
-    position: absolute; border-radius: 2px;
-    backdrop-filter: blur(4px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    display: flex; align-items: center; justify-content: center;
-    /* Effetto "Circuito Interno" */
-    background-image: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
-    background-size: 8px 8px;
-}
-
-.block-h { 
-    background-color: rgba(0, 243, 255, 0.2); 
-    box-shadow: 0 0 15px var(--cyan), inset 0 0 10px var(--cyan);
-}
-
-.block-v { 
-    background-color: rgba(255, 0, 255, 0.2); 
-    box-shadow: 0 0 15px var(--magenta), inset 0 0 10px var(--magenta);
-}
-
-/* Chiave Olografica con "K" */
-.block-key {
-    background-color: rgba(255, 204, 0, 0.3);
-    border: 2px solid var(--gold);
-    box-shadow: 0 0 25px var(--gold), inset 0 0 15px var(--gold);
-}
-.block-key::after {
-    content: "K"; color: var(--gold); font-size: 24px; font-weight: bold;
-    text-shadow: 0 0 10px var(--gold);
-}
-
-/* UI */
-.top-stats { width: 312px; display: flex; justify-content: space-between; color: var(--cyan); text-shadow: 0 0 5px var(--cyan); }
-.cyber-btn {
-    background: transparent; border: 1px solid var(--cyan); color: var(--cyan);
-    padding: 8px 15px; border-radius: 4px; cursor: pointer; text-transform: uppercase;
-}
-.cyber-btn.active { background: var(--cyan); color: #000; box-shadow: 0 0 15px var(--cyan); }
+function resetLevel() { state.blocks = JSON.parse(JSON.stringify(state.initial)); render(); }
+generateLevel();
