@@ -3,50 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MasterKey Elite</title>
+    <title>MasterKey: Wood Legacy</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
-<body class="skin-wood">
-    <div class="game-wrapper">
-        <header>
-            <div class="brand">MASTER<span>KEY</span></div>
-            <div class="stats-bar">
-                <div class="stat-pill">LVL <span id="lvl">1</span></div>
-                <div class="stat-pill">XP <span id="xp">0</span></div>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <div class="info">
+                <span>LIVELLO <b id="lvl">1</b></span>
+                <span>XP <b id="xp">0</b></span>
             </div>
-        </header>
+            <button class="btn-shop" onclick="toggleShop()">🛒 SHOP</button>
+        </div>
 
-        <main class="game-area">
-            <div class="board-container">
-                <div id="grid" class="board"></div>
-                <div class="exit-guide"></div>
-            </div>
-        </main>
+        <div class="board-frame">
+            <div id="grid" class="board"></div>
+            <div class="exit-slot"></div>
+        </div>
 
-        <section class="ui-footer">
-            <div class="progress-container">
-                <div class="progress-label">PROSSIMO RANGO: <span id="rank">NOVIZIO</span></div>
-                <div class="bar-bg"><div id="xp-bar" class="bar-fill"></div></div>
+        <div class="footer">
+            <div class="xp-progress"><div id="xp-bar" class="fill"></div></div>
+            <div class="controls">
+                <button class="btn" onclick="resetLevel()">RESET</button>
+                <button class="btn hint" onclick="useHint()">HINT (50 XP)</button>
             </div>
-            
-            <div class="button-grid">
-                <button class="btn btn-reset" onclick="resetCurrentLevel()">RESET</button>
-                <button class="btn btn-hint" onclick="useSmartHint()">SUGGERIMENTO</button>
-                <button class="btn btn-shop" onclick="toggleShop()">SKINS</button>
-            </div>
-        </section>
+        </div>
     </div>
 
-    <div id="shop-overlay" class="overlay hidden">
-        <div class="modal">
-            <h3>IL MERCANTE</h3>
-            <div class="skin-list">
-                <button class="skin-opt" onclick="applySkin('wood')">LEGNO NOBILE</button>
-                <button class="skin-opt" onclick="applySkin('marble')">MARMO BIANCO</button>
-                <button class="skin-opt" onclick="applySkin('neon')">VUOTO NEON</button>
+    <div id="shop" class="modal hidden">
+        <div class="modal-content">
+            <h3>MERCANTE DI SKIN</h3>
+            <div class="skin-item" onclick="buySkin('wood', 0)">
+                <span>Legno Base</span> <span>GRATIS</span>
             </div>
-            <button class="btn-close" onclick="toggleShop()">CHIUDI</button>
+            <div class="skin-item" onclick="buySkin('marble', 1500)">
+                <span>Marmo Bianco</span> <span>1500 XP</span>
+            </div>
+            <div class="skin-item" onclick="buySkin('obsidian', 3000)">
+                <span>Ossidiana</span> <span>3000 XP</span>
+            </div>
+            <button class="btn" onclick="toggleShop()">CHIUDI</button>
         </div>
     </div>
 
