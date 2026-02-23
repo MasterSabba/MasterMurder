@@ -1,135 +1,112 @@
 const grid = document.getElementById('grid');
-const cellSize = 55;
+const cellSize = 50;
+let blocks = [];
+let currentLvl = parseInt(localStorage.getItem('mkey_lvl')) || 1;
+let totalXP = parseInt(localStorage.getItem('mkey_xp')) || 0;
 let moves = 0;
-let blocksData = [];
 
-// --- SISTEMA DI RANK & SALVATAGGIO ---
-let xp = parseInt(localStorage.getItem('masterkey_xp')) || 0;
-
-function updateRankUI() {
-    const ranks = ["NOVICE", "INFILTRATOR", "HACKER", "GHOST", "MASTER"];
-    const level = Math.floor(xp / 100);
-    const currentRank = ranks[Math.min(level, ranks.length - 1)];
-    const progress = xp % 100;
-
-    document.getElementById('rank-title').innerText = currentRank;
-    document.getElementById('xp-text').innerText = `${xp} XP`;
-    document.getElementById('rank-fill').style.width = `${progress}%`;
-    
-    // Salvataggio automatico
-    localStorage.setItem('masterkey_xp', xp);
-}
-
-// --- GENERATORE CASUALE ---
-function generateRandomLevel() {
+function initLevel() {
     grid.innerHTML = '';
     moves = 0;
-    document.getElementById('move-count').innerText = moves;
+    document.getElementById('move-display').innerText = moves;
+    document.getElementById('lvl-display').innerText = currentLvl;
+    updateRank();
+
+    // Generazione livello (La chiave è sempre in riga 2)
+    blocks = [{ x: 0, y: 2, l: 2, o: 'h', k: true }];
     
-    // 1. La Chiave (sempre sulla riga 2)
-    blocksData = [{ x: 0, y: 2, l: 2, o: 'h', k: true }];
-    
-    // 2. Aggiungi blocchi casuali (tenta 15 volte)
-    for (let i = 0; i < 15; i++) {
-        let l = Math.random() > 0.7 ? 3 : 2; // Lunghezza 2 o 3
-        let o = Math.random() > 0.5 ? 'h' : 'v'; // Orizzontale o Verticale
+    // Aggiungi ostacoli in base al livello
+    let obstacleCount = 4 + Math.min(currentLvl, 8);
+    for (let i = 0; i < 20; i++) {
+        if (blocks.length > obstacleCount) break;
+        let l = Math.random() > 0.7 ? 3 : 2;
+        let o = Math.random() > 0.5 ? 'h' : 'v';
         let x = Math.floor(Math.random() * (6 - (o === 'h' ? l : 0)));
         let y = Math.floor(Math.random() * (6 - (o === 'v' ? l : 0)));
 
-        // Non coprire la via d'uscita della chiave inizialmente
-        if (o === 'v' && x > 1 && y <= 2 && y + l > 2) {
-            // Questo blocco blocca la chiave, va bene per il gioco!
-        }
-
-        // Verifica collisioni prima di aggiungere
-        let collision = false;
-        for (let b of blocksData) {
-            if (checkRectCollision(x, y, l, o, b.x, b.y, b.l, b.o)) {
-                collision = true;
-                break;
-            }
-        }
-
-        if (!collision) {
-            blocksData.push({ x, y, l, o, k: false });
+        if (!blocks.some(b => checkCollision(x, y, l, o, b))) {
+            blocks.push({ x, y, l, o, k: false });
         }
     }
-    renderBlocks();
+    render();
 }
 
-function renderBlocks() {
+function render() {
     grid.innerHTML = '';
-    blocksData.forEach((data, index) => createBlockUI(data, index));
-}
+    blocks.forEach((b, i) => {
+        const div = document.createElement('div');
+        div.className = `block ${b.k ? 'key-block' : (b.o === 'h' ? 'wood-h' : 'wood-v')}`;
+        div.style.width = (b.o === 'h' ? b.l * cellSize : cellSize) - 6 + 'px';
+        div.style.height = (b.o === 'v' ? b.l * cellSize : cellSize) - 6 + 'px';
+        div.style.left = b.x * cellSize + 3 + 'px';
+        div.style.top = b.y * cellSize + 3 + 'px';
+        if(b.k) div.innerText = '🔑';
 
-function createBlockUI(data, id) {
-    const el = document.createElement('div');
-    el.className = `block ${data.k ? 'key-block' : ''}`;
-    el.style.width = (data.o === 'h' ? data.l * cellSize : cellSize) - 6 + 'px';
-    el.style.height = (data.o === 'v' ? data.l * cellSize : cellSize) - 6 + 'px';
-    el.style.left = data.x * cellSize + 3 + 'px';
-    el.style.top = data.y * cellSize + 3 + 'px';
-    if(data.k) el.innerHTML = "🔑";
+        // Eventi Drag corretti
+        div.onpointerdown = (e) => {
+            let startX = e.clientX;
+            let startY = e.clientY;
+            let origX = b.x;
+            let origY = b.y;
+            div.setPointerCapture(e.pointerId);
 
-    // Logica di Drag (Semplificata)
-    let isDragging = false;
-    let startPos;
-
-    el.onmousedown = (e) => {
-        isDragging = true;
-        startPos = data.o === 'h' ? e.clientX : e.clientY;
-        
-        document.onmousemove = (moveE) => {
-            if (!isDragging) return;
-            let current = data.o === 'h' ? moveE.clientX : moveE.clientY;
-            let diff = Math.round((current - startPos) / cellSize);
-            if (diff !== 0) {
-                let newCoord = (data.o === 'h' ? data.x : data.y) + diff;
-                if (canMove(id, newCoord)) {
-                    if (data.o === 'h') data.x = newCoord; else data.y = newCoord;
-                    startPos = current;
-                    renderBlocks();
-                    moves++;
-                    document.getElementById('move-count').innerText = moves;
-                    checkWin();
+            div.onpointermove = (em) => {
+                let dx = Math.round((em.clientX - startX) / cellSize);
+                let dy = Math.round((em.clientY - startY) / cellSize);
+                let target = b.o === 'h' ? origX + dx : origY + dy;
+                
+                if (canMove(i, target)) {
+                    if (b.o === 'h') b.x = target; else b.y = target;
+                    div.style.left = b.x * cellSize + 3 + 'px';
+                    div.style.top = b.y * cellSize + 3 + 'px';
                 }
-            }
+            };
+
+            div.onpointerup = () => {
+                div.onpointermove = null;
+                moves++;
+                document.getElementById('move-display').innerText = moves;
+                if (b.k && b.x === 4) win();
+            };
         };
-        document.onmouseup = () => isDragging = false;
-    };
+        grid.appendChild(div);
+    });
 }
 
-function canMove(id, newCoord) {
-    const b = blocksData[id];
-    if (newCoord < 0 || newCoord + b.l > 6) return false;
-    for (let i = 0; i < blocksData.length; i++) {
-        if (i === id) continue;
-        const other = blocksData[i];
-        let bx = b.o === 'h' ? newCoord : b.x;
-        let by = b.o === 'v' ? newCoord : b.y;
-        if (checkRectCollision(bx, by, b.l, b.o, other.x, other.y, other.l, other.o)) return false;
-    }
-    return true;
+function canMove(idx, val) {
+    const b = blocks[idx];
+    if (val < 0 || val + b.l > 6) return false;
+    return !blocks.some((other, i) => {
+        if (i === idx) return false;
+        let nx = b.o === 'h' ? val : b.x;
+        let ny = b.o === 'v' ? val : b.y;
+        return checkCollision(nx, ny, b.l, b.o, other);
+    });
 }
 
-function checkRectCollision(x1, y1, l1, o1, x2, y2, l2, o2) {
-    let w1 = o1 === 'h' ? l1 : 1, h1 = o1 === 'v' ? l1 : 1;
-    let w2 = o2 === 'h' ? l2 : 1, h2 = o2 === 'v' ? l2 : 1;
-    return x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2;
+function checkCollision(x, y, l, o, other) {
+    let w = o === 'h' ? l : 1, h = o === 'v' ? l : 1;
+    let ow = other.o === 'h' ? other.l : 1, oh = other.o === 'v' ? other.l : 1;
+    return x < other.x + ow && x + w > other.x && y < other.y + oh && y + h > other.y;
 }
 
-function checkWin() {
-    const key = blocksData.find(b => b.k);
-    if (key.x === 4) {
-        xp += 25;
-        alert("ACCESS GRANTED! +25 XP");
-        updateRankUI();
-        generateRandomLevel();
-    }
+function win() {
+    totalXP += 20;
+    currentLvl++;
+    localStorage.setItem('mkey_lvl', currentLvl);
+    localStorage.setItem('mkey_xp', totalXP);
+    alert("LIVELLO COMPLETATO!");
+    initLevel();
 }
 
-function resetLevel() { renderBlocks(); }
+function updateRank() {
+    const titles = ["NOVICE", "APPRENTICE", "WOOD-CUTTER", "CHAMPION", "MASTER"];
+    let rankIdx = Math.floor(totalXP / 100);
+    document.getElementById('rank-name').innerText = titles[Math.min(rankIdx, 4)];
+    document.getElementById('rank-fill').style.width = (totalXP % 100) + "%";
+}
 
-// Avvio
-updateRankUI();
-generateRandomLevel();
+function resetLevel() { initLevel(); }
+function nextLevel() { initLevel(); }
+
+initLevel()
