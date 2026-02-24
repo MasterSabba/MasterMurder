@@ -1,74 +1,169 @@
+/* RESET E BASE */
 :root {
-    --wood-dark: #3d2616;
-    --wood-light: #8b5a2b;
-    --wood-grain: #5d3a1a;
-    --gold: #d4af37;
-    --cell: 52px;
+    --wood-dark: #3d2616;      /* Legno scuro della cornice */
+    --wood-medium: #5d3a1a;    /* Sfondo della griglia */
+    --wood-light: #b07d4d;     /* Blocchi standard */
+    --gold-main: #ffd700;      /* Chiave d'oro */
+    --gold-dark: #b8860b;
+    --cell: 50px;              /* Dimensione cella */
 }
 
-body, html {
-    margin: 0; padding: 0; height: 100vh; overflow: hidden;
-    background: #1a0f0a; font-family: 'Georgia', serif;
-    touch-action: none; color: #f0e6d2;
-}
-
-.workshop-env {
-    height: 100vh; display: flex; flex-direction: column;
-    justify-content: space-around; align-items: center;
+body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     background: radial-gradient(circle, #2d1b0d 0%, #1a0f0a 100%);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    touch-action: none; /* Fondamentale per evitare lo scroll dello schermo */
+    overflow: hidden;
 }
 
-.header { display: flex; gap: 50px; font-size: 1.2rem; font-weight: bold; }
-.gold { color: var(--gold); }
+/* CONTENITORE PRINCIPALE */
+.game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
 
-/* La Board: Sembra un vassoio di legno massiccio */
+/* BARRA STATISTICHE */
+.stat-bar {
+    color: #f0e6d2;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-weight: bold;
+    display: flex;
+    gap: 30px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.stat-bar span b {
+    color: var(--gold-main);
+}
+
+/* LA CORNICE DEL GIOCO */
 .board-frame {
-    position: relative; padding: 12px;
+    padding: 15px;
     background: var(--wood-dark);
-    border-radius: 8px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.6), inset 0 2px 10px rgba(0,0,0,0.5);
+    border-radius: 12px;
+    box-shadow: 
+        0 20px 50px rgba(0,0,0,0.7), 
+        inset 0 2px 5px rgba(255,255,255,0.1);
+    border: 2px solid #2a180d;
 }
 
-.wood-grid {
-    width: 312px; height: 312px; position: relative;
-    background: #1e110a; /* Fondo scuro scavato */
+/* LA GRIGLIA (SCAVATA) */
+.grid {
+    width: 300px; /* 6 celle * 50px */
+    height: 300px;
+    position: relative;
+    background: #1e110a; /* Colore del legno "scavato" */
     border-radius: 4px;
-    box-shadow: inset 0 5px 15px rgba(0,0,0,0.8);
+    box-shadow: inset 0 10px 20px rgba(0,0,0,0.8); /* Effetto profondità */
+    overflow: hidden;
+}
+
+/* GRIGLIA DI RIFERIMENTO (SOTTILE) */
+.grid::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: 
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: var(--cell) var(--cell);
+    pointer-events: none;
 }
 
 /* BLOCCHI DI LEGNO */
 .block {
-    position: absolute; border-radius: 4px;
-    cursor: grab; transition: transform 0.1s;
-    box-shadow: 0 5px 0 #2a180d, inset 0 1px 1px rgba(255,255,255,0.2);
+    position: absolute;
+    border-radius: 6px;
+    box-sizing: border-box;
+    cursor: grab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.05s ease;
+    
+    /* Effetto 3D e venature */
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 
+        0 5px 0 #2a180d,               /* Ombra inferiore (spessore) */
+        inset 0 1px 2px rgba(255,255,255,0.2); /* Luce superiore */
 }
 
-.block:active { transform: translateY(2px); box-shadow: 0 2px 0 #2a180d; }
+.block:active {
+    cursor: grabbing;
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #2a180d, inset 0 1px 2px rgba(255,255,255,0.2);
+}
 
-/* Venature Legno Orizzontali */
+/* Legno Orizzontale (Venature lungo X) */
 .block-h {
-    background: linear-gradient(var(--wood-light), var(--wood-grain));
-    background-image: repeating-linear-gradient(0deg, transparent, transparent 4px, rgba(0,0,0,0.1) 5px);
+    background: var(--wood-light);
+    background-image: repeating-linear-gradient(
+        0deg, 
+        transparent, 
+        transparent 4px, 
+        rgba(0,0,0,0.08) 5px
+    );
 }
 
-/* Venature Legno Verticali */
+/* Legno Verticale (Venature lungo Y) */
 .block-v {
-    background: linear-gradient(to right, var(--wood-light), var(--wood-grain));
-    background-image: repeating-linear-gradient(90deg, transparent, transparent 4px, rgba(0,0,0,0.1) 5px);
+    background: #96653a;
+    background-image: repeating-linear-gradient(
+        90deg, 
+        transparent, 
+        transparent 4px, 
+        rgba(0,0,0,0.08) 5px
+    );
 }
 
-/* Il Pezzo d'Oro */
+/* LA CHIAVE D'ORO */
 .block-key {
-    background: linear-gradient(135deg, #ffd700, #b8860b);
+    background: linear-gradient(135deg, var(--gold-main), var(--gold-dark));
     border: 1px solid #fff;
-    box-shadow: 0 5px 0 #7a5d00;
-    z-index: 10;
+    box-shadow: 0 5px 0 #7a5d00, inset 0 1px 3px rgba(255,255,255,0.5);
+    z-index: 10; /* Sempre sopra gli altri visivamente */
 }
 
-.wood-btn {
-    background: var(--wood-grain); border: none; color: white;
-    padding: 12px 30px; border-radius: 4px; cursor: pointer;
-    font-weight: bold; box-shadow: 0 4px 0 #2a180d;
+.block-key::after {
+    content: "🔑";
+    font-size: 24px;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
 }
-.wood-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #2a180d; }
-.accent { background: #6b8e23; box-shadow: 0 4px 0 #3d5214; }
+
+/* BOTTONI UI */
+.controls {
+    display: flex;
+    gap: 15px;
+}
+
+.btn {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 6px;
+    background: var(--wood-medium);
+    color: #f0e6d2;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #2a180d;
+    transition: all 0.2s;
+}
+
+.btn:hover {
+    background: #6d4422;
+}
+
+.btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #2a180d;
+}
+
+.btn-reset { background: #8b3a2b; box-shadow: 0 4px 0 #4d1d15; }
+.btn-reset:hover { background: #a54636; }
