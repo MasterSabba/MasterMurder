@@ -1,123 +1,43 @@
-:root {
-    --cell: 50px;
-}
+:root { --cell: 50px; --bg: #e0d5c1; }
 
 body {
-    margin: 0;
-    padding: 0;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background: #1a110a;
-    color: #f0e6d2;
-    font-family: 'Segoe UI', sans-serif;
-    touch-action: none;
-    overflow: hidden;
+    margin: 0; background: #2c1d12; height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-family: sans-serif; touch-action: none; overflow: hidden;
 }
 
-.stat-bar {
-    margin-bottom: 20px;
-    font-size: 1.1rem;
-    letter-spacing: 2px;
-    display: flex;
-    gap: 30px;
-}
-
-.stat-bar b { color: #ffd700; }
+.ui { color: #e0d5c1; margin-bottom: 20px; display: flex; gap: 30px; font-weight: bold; }
 
 .board-frame {
-    position: relative;
-    padding: 12px;
-    background: #3d2616;
-    border-radius: 20px;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.8);
-    border: 2px solid #2a180d;
+    padding: 10px; background: #4a3423; border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 
 .grid {
-    width: 300px; /* 6 x 50px */
-    height: 300px;
-    position: relative;
-    background: #2a180d;
-    border-radius: 10px;
-    box-shadow: inset 6px 6px 15px rgba(0,0,0,0.6);
+    width: 300px; height: 300px; position: relative;
+    background: #362519; border-radius: 8px;
+    box-shadow: inset 5px 5px 15px rgba(0,0,0,0.4);
 }
 
-/* IL TUO STILE NEUMORPHIC */
+/* IL PEZZO SOLIDO */
 .block {
-    position: absolute;
-    border-radius: 14px;
-    cursor: grab;
-    box-sizing: border-box;
-    border: 3px solid #5a3a1f;
-    background: linear-gradient(145deg, #9b6b3d, #7a4f28);
-    box-shadow:
-        inset -4px -4px 8px rgba(0,0,0,0.4),
-        inset 4px 4px 8px rgba(255,255,255,0.15),
-        6px 6px 12px rgba(0,0,0,0.5);
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    user-select: none;
-}
-
-/* Venature */
-.block::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-        90deg,
-        rgba(60,30,10,0.2) 0px,
-        rgba(60,30,10,0.2) 2px,
-        transparent 2px,
-        transparent 8px
-    );
-    opacity: 0.6;
-    pointer-events: none;
+    position: absolute; border-radius: 12px; box-sizing: border-box;
+    border: 2px solid #5a3a1f; cursor: grab;
+    background: linear-gradient(145deg, #a67c52, #8b5e34);
+    box-shadow: inset -3px -3px 6px rgba(0,0,0,0.3), 
+                inset 3px 3px 6px rgba(255,255,255,0.1),
+                4px 4px 8px rgba(0,0,0,0.4);
+    display: flex; align-items: center; justify-content: center;
+    transition: left 0.1s, top 0.1s; /* Movimento fluido ma controllato */
 }
 
 .block-key {
-    background: linear-gradient(145deg, #ffd700, #b8860b);
-    border-color: #d4af37;
-    z-index: 10;
+    background: linear-gradient(145deg, #ffd700, #c5a000);
+    border-color: #fff; z-index: 10;
 }
 
-.block-key::after {
-    content: "🔑";
-    font-size: 24px;
-    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.4));
-}
-
-.block:active {
-    cursor: grabbing;
-    transform: translateY(2px);
-    box-shadow:
-        inset -2px -2px 5px rgba(0,0,0,0.5),
-        inset 2px 2px 5px rgba(255,255,255,0.1);
-}
-
-.controls {
-    margin-top: 30px;
-    display: flex;
-    gap: 15px;
-}
-
-.btn {
-    padding: 12px 20px;
-    border: none;
-    border-radius: 8px;
-    background: #5a3a1f;
-    color: #fff;
-    font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 4px 0 #2a180d;
-}
-
-.btn:active {
-    transform: translateY(2px);
-    box-shadow: 0 2px 0 #2a180d;
+.actions { margin-top: 30px; display: flex; gap: 10px; }
+button {
+    padding: 10px 20px; border-radius: 5px; border: none;
+    background: #8b5e34; color: white; font-weight: bold; cursor: pointer;
 }
