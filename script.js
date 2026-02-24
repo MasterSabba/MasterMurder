@@ -3,23 +3,13 @@ const cellSize = 50;
 let state = {
     lvl: parseInt(localStorage.getItem('mk_lvl')) || 1,
     xp: parseInt(localStorage.getItem('mk_xp')) || 0,
-    blocks: [],
-    initial: []
+    blocks: [], initial: []
 };
 
-// Carica dati iniziali
-document.getElementById('lvl').innerText = state.lvl;
-document.getElementById('xp').innerText = state.xp;
-
-// 1. Logica Collisioni Rigida
-function isColliding(x, y, l, o, ignoreIdx) {
+function checkCollision(x, y, l, o, ignoreIdx) {
     const w = o === 'h' ? l : 1;
     const h = o === 'v' ? l : 1;
-
-    // Confini griglia
     if (x < 0 || x + w > 6 || y < 0 || y + h > 6) return true;
-
-    // Controllo contro altri blocchi
     return state.blocks.some((b, i) => {
         if (i === ignoreIdx) return false;
         const bw = b.o === 'h' ? b.l : 1;
@@ -28,12 +18,10 @@ function isColliding(x, y, l, o, ignoreIdx) {
     });
 }
 
-// 2. Generatore di livelli (Cresce con il livello)
 function generateLevel() {
-    let layout = [{x: 0, y: 2, l: 2, o: 'h', k: true}]; // La Chiave
-    let pieces = Math.min(4 + Math.floor(state.lvl / 2), 11);
-
-    for (let i = 0; i < pieces; i++) {
+    let layout = [{x: 0, y: 2, l: 2, o: 'h', k: true}];
+    let count = Math.min(4 + Math.floor(state.lvl / 2), 11);
+    for (let i = 0; i < count; i++) {
         let attempts = 0;
         while (attempts < 150) {
             attempts++;
@@ -41,11 +29,7 @@ function generateLevel() {
             let o = Math.random() > 0.5 ? 'h' : 'v';
             let x = Math.floor(Math.random() * (6 - (o === 'h' ? l : 0)));
             let y = Math.floor(Math.random() * (6 - (o === 'v' ? l : 0)));
-
-            // Evita di bloccare l'uscita in modo permanente a destra
-            if (o === 'v' && x === 5) continue;
-
-            if (!isColliding(x, y, l, o, -1)) {
+            if (!checkCollision(x, y, l, o, -1)) {
                 layout.push({x, y, l, o, k: false});
                 break;
             }
@@ -56,7 +40,6 @@ function generateLevel() {
     render();
 }
 
-// 3. Renderizzazione e Input
 function render() {
     grid.innerHTML = '';
     state.blocks.forEach((b, i) => {
@@ -69,30 +52,31 @@ function render() {
 
         div.onpointerdown = (e) => {
             div.setPointerCapture(e.pointerId);
-            let startX = e.clientX;
-            let startY = e.clientY;
-            let origX = b.x;
-            let origY = b.y;
+            let lastX = e.clientX;
+            let lastY = e.clientY;
 
             div.onpointermove = (em) => {
-                let dx = Math.round((em.clientX - startX) / cellSize);
-                let dy = Math.round((em.clientY - startY) / cellSize);
+                let dx = em.clientX - lastX;
+                let dy = em.clientY - lastY;
                 
-                let targetX = b.o === 'h' ? origX + dx : b.x;
-                let targetY = b.o === 'v' ? origY + dy : b.y;
+                // Se lo spostamento supera metà cella, proviamo a muoverci
+                if (Math.abs(b.o === 'h' ? dx : dy) >= cellSize / 2) {
+                    let dir = (b.o === 'h' ? dx : dy) > 0 ? 1 : -1;
+                    let nextX = b.x + (b.o === 'h' ? dir : 0);
+                    let nextY = b.y + (b.o === 'v' ? dir : 0);
 
-                // Controllo collisione prima di muovere
-                if (!isColliding(targetX, targetY, b.l, b.o, i)) {
-                    b.x = targetX;
-                    b.y = targetY;
-                    div.style.left = b.x * cellSize + 'px';
-                    div.style.top = b.y * cellSize + 'px';
+                    if (!checkCollision(nextX, nextY, b.l, b.o, i)) {
+                        b.x = nextX;
+                        b.y = nextY;
+                        div.style.left = b.x * cellSize + 'px';
+                        div.style.top = b.y * cellSize + 'px';
+                        lastX = em.clientX;
+                        lastY = em.clientY;
+                    }
                 }
             };
-
             div.onpointerup = () => {
                 div.onpointermove = null;
-                // Vittoria!
                 if (b.k && b.x === 4) {
                     win();
                 }
@@ -103,13 +87,12 @@ function render() {
 }
 
 function win() {
-    state.xp += 100;
-    state.lvl++;
+    state.lvl++; state.xp += 100;
     localStorage.setItem('mk_lvl', state.lvl);
     localStorage.setItem('mk_xp', state.xp);
     document.getElementById('lvl').innerText = state.lvl;
     document.getElementById('xp').innerText = state.xp;
-    alert("NODO SBLOCCATO!");
+    alert("VINTO!");
     generateLevel();
 }
 
