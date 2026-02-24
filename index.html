@@ -3,25 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MasterKey: Wood Edition</title>
+    <title>MasterKey: Solid State</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="stat-bar">
-        <span>LIVELLO: <b id="lvl">1</b></span>
-        <span>XP: <b id="xp">0</b></span>
+    <div class="ui">
+        <div>LIVELLO: <span id="lvl">1</span></div>
+        <div>PUNTI: <span id="xp">0</span></div>
     </div>
-
+    
     <div class="board-frame">
         <div id="grid" class="grid"></div>
-        <div class="exit-gate"></div>
     </div>
 
-    <div class="controls">
-        <button class="btn btn-reset" onclick="resetLevel()">RESET</button>
-        <button class="btn btn-next" onclick="generateLevel()">NUOVO SCHEMA</button>
+    <div class="actions">
+        <button onclick="resetLevel()">RESET</button>
+        <button onclick="nextLevel()">SALTA</button>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>
