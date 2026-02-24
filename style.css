@@ -1,87 +1,123 @@
 :root {
-  --cell: 50px;
-  --wood-bg: #4a3528; /* Sfondo scuro per far risaltare i blocchi */
+    --cell: 50px;
 }
 
 body {
-  margin: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  background: #1a110a;
-  touch-action: none;
-  overflow: hidden;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: #1a110a;
+    color: #f0e6d2;
+    font-family: 'Segoe UI', sans-serif;
+    touch-action: none;
+    overflow: hidden;
 }
 
+.stat-bar {
+    margin-bottom: 20px;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    display: flex;
+    gap: 30px;
+}
+
+.stat-bar b { color: #ffd700; }
+
 .board-frame {
-  padding: 15px;
-  background: #3d2616;
-  border-radius: 20px;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    position: relative;
+    padding: 12px;
+    background: #3d2616;
+    border-radius: 20px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+    border: 2px solid #2a180d;
 }
 
 .grid {
-  width: 300px;
-  height: 300px;
-  position: relative;
-  background: #2a180d;
-  border-radius: 10px;
-  box-shadow: inset 6px 6px 12px rgba(0,0,0,0.5);
+    width: 300px; /* 6 x 50px */
+    height: 300px;
+    position: relative;
+    background: #2a180d;
+    border-radius: 10px;
+    box-shadow: inset 6px 6px 15px rgba(0,0,0,0.6);
 }
 
-/* IL TUO STILE ADATTATO */
+/* IL TUO STILE NEUMORPHIC */
 .block {
-  position: absolute;
-  border-radius: 14px; /* Come richiesto */
-  cursor: pointer;
-  box-sizing: border-box;
-  border: 3px solid #5a3a1f; /* Come richiesto */
-  
-  /* Base legno */
-  background: linear-gradient(145deg, #9b6b3d, #7a4f28);
-  
-  /* Effetto 3D richiesto */
-  box-shadow:
-    inset -4px -4px 8px rgba(0,0,0,0.4),
-    inset 4px 4px 8px rgba(255,255,255,0.15),
-    6px 6px 12px rgba(0,0,0,0.5);
-
-  overflow: hidden;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    position: absolute;
+    border-radius: 14px;
+    cursor: grab;
+    box-sizing: border-box;
+    border: 3px solid #5a3a1f;
+    background: linear-gradient(145deg, #9b6b3d, #7a4f28);
+    box-shadow:
+        inset -4px -4px 8px rgba(0,0,0,0.4),
+        inset 4px 4px 8px rgba(255,255,255,0.15),
+        6px 6px 12px rgba(0,0,0,0.5);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
 }
 
-/* Venature sovrapposte (dal tuo codice) */
+/* Venature */
 .block::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    90deg,
-    rgba(60,30,10,0.2) 0px,
-    rgba(60,30,10,0.2) 2px,
-    transparent 2px,
-    transparent 8px
-  );
-  opacity: 0.6;
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+        90deg,
+        rgba(60,30,10,0.2) 0px,
+        rgba(60,30,10,0.2) 2px,
+        transparent 2px,
+        transparent 8px
+    );
+    opacity: 0.6;
+    pointer-events: none;
 }
 
-/* Se il blocco è orizzontale, ruotiamo le venature per realismo */
-.block-h::before { background-image: repeating-linear-gradient(0deg, rgba(60,30,10,0.2) 0px, rgba(60,30,10,0.2) 2px, transparent 2px, transparent 8px); }
-
-/* CHIAVE GOLD (stessa logica ma colori oro) */
 .block-key {
-  background: linear-gradient(145deg, #ffd700, #b8860b);
-  border-color: #d4af37;
+    background: linear-gradient(145deg, #ffd700, #b8860b);
+    border-color: #d4af37;
+    z-index: 10;
 }
 
-/* Effetto quando clicchi (dal tuo codice) */
+.block-key::after {
+    content: "🔑";
+    font-size: 24px;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.4));
+}
+
 .block:active {
-  transform: translateY(4px);
-  box-shadow:
-    inset -2px -2px 5px rgba(0,0,0,0.5),
-    inset 2px 2px 5px rgba(255,255,255,0.1);
+    cursor: grabbing;
+    transform: translateY(2px);
+    box-shadow:
+        inset -2px -2px 5px rgba(0,0,0,0.5),
+        inset 2px 2px 5px rgba(255,255,255,0.1);
+}
+
+.controls {
+    margin-top: 30px;
+    display: flex;
+    gap: 15px;
+}
+
+.btn {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #5a3a1f;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #2a180d;
+}
+
+.btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #2a180d;
 }
