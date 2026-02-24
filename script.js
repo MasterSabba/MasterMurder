@@ -15,22 +15,20 @@ function init() {
 function generateLevel() {
     let layout = [{x: 0, y: 2, l: 2, o: 'h', k: true}];
     
-    // DIFFICOLTÀ SCALABILE: 
-    // Livello 1-3: 4 pezzi | Livello 4-10: 7 pezzi | Livello 10+: 11 pezzi
-    let pieceCount = state.lvl < 4 ? 4 : (state.lvl < 10 ? 7 : 11);
+    // DIFFICOLTÀ: 
+    // Inizio soft (5 pezzi), poi aumenta ogni 2 livelli fino a un max di 13 pezzi.
+    let pieceCount = Math.min(5 + Math.floor(state.lvl / 2), 13);
 
     for(let i=0; i < pieceCount; i++) {
         let attempts = 0;
-        while(attempts < 200) {
+        while(attempts < 300) {
             attempts++;
             let l = Math.random() > 0.8 ? 3 : 2;
             let o = Math.random() > 0.5 ? 'h' : 'v';
             let x = Math.floor(Math.random() * (6 - (o === 'h' ? l : 0)));
             let y = Math.floor(Math.random() * (6 - (o === 'v' ? l : 0)));
 
-            // Protezione riga d'uscita
-            if (o === 'v' && x > 2 && y <= 2 && y+l > 2) continue;
-
+            // Lascia sempre un "buco" libero (almeno 4 celle vuote totali)
             if(!layout.some(b => checkCollision(x, y, l, o, b))) {
                 layout.push({x, y, l, o, k: false});
                 break;
@@ -95,11 +93,11 @@ function checkCollision(x, y, l, o, other) {
 }
 
 function win() {
-    state.xp += 500;
+    state.xp += 100 * state.lvl;
     state.lvl += 1;
     localStorage.setItem('mk_xp', state.xp);
     localStorage.setItem('mk_lvl', state.lvl);
-    alert("NODE CLEARED. ACCESSING NEXT LEVEL...");
+    alert("RISOLTO! +XP");
     generateLevel();
     updateUI();
 }
@@ -116,8 +114,8 @@ function resetLevel() {
 
 function useHint() {
     const key = document.querySelector('.block-key');
-    key.style.boxShadow = "0 0 40px var(--gold)";
-    setTimeout(() => key.style.boxShadow = "", 1000);
+    key.style.filter = "brightness(1.5)";
+    setTimeout(() => key.style.filter = "", 1000);
 }
 
 init();
