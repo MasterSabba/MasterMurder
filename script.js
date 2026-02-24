@@ -1,106 +1,147 @@
-const grid = document.getElementById('grid');
-const cellSize = 50;
-let state = { lvl: 1, xp: 0, blocks: [], initial: [] };
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
-// Funzione di collisione pura
-function canPlace(x, y, l, o, ignoreIdx) {
-    const w = o === 'h' ? l : 1;
-    const h = o === 'v' ? l : 1;
-    if (x < 0 || x + w > 6 || y < 0 || y + h > 6) return false;
-    
-    for (let i = 0; i < state.blocks.length; i++) {
-        if (i === ignoreIdx) continue;
-        const b = state.blocks[i];
-        const bw = b.o === 'h' ? b.l : 1;
-        const bh = b.o === 'v' ? b.l : 1;
-        if (x < b.x + bw && x + w > b.x && y < b.y + bh && y + h > b.y) return false;
-    }
-    return true;
-}
+const size = 8;
+const tileSize = canvas.width / size;
+
+let level = 1;
+let moves = 0;
+
+let player;
+let exit;
+let walls = [];
+let animating = false;
 
 function generateLevel() {
-    state.blocks = [{x: 0, y: 2, l: 2, o: 'h', k: true}];
-    const pieces = Math.min(3 + state.lvl, 10);
-    
-    for (let i = 0; i < pieces; i++) {
-        let attempts = 0;
-        while (attempts++ < 100) {
-            let l = Math.random() > 0.8 ? 3 : 2;
-            let o = Math.random() > 0.5 ? 'h' : 'v';
-            let x = Math.floor(Math.random() * (6 - (o === 'h' ? l : 0)));
-            let y = Math.floor(Math.random() * (6 - (o === 'v' ? l : 0)));
-            // Evitiamo di bloccare l'uscita della chiave direttamente
-            if (o === 'v' && x > 3 && y <= 2 && y+l > 2) continue;
-            
-            if (canPlace(x, y, l, o, -1)) {
-                state.blocks.push({x, y, l, o, k: false});
-                break;
-            }
-        }
+  player = { x: 0, y: 0 };
+  exit = { x: size - 1, y: size - 1 };
+  walls = [];
+
+  let wallCount = 8 + level * 2;
+
+  for (let i = 0; i < wallCount; i++) {
+    let wx = Math.floor(Math.random() * size);
+    let wy = Math.floor(Math.random() * size);
+
+    if ((wx !== 0 || wy !== 0) && (wx !== exit.x || wy !== exit.y)) {
+      walls.push({ x: wx, y: wy });
     }
-    state.initial = JSON.parse(JSON.stringify(state.blocks));
-    render();
+  }
+
+  moves = 0;
+  updateUI();
 }
 
-function render() {
-    grid.innerHTML = '';
-    state.blocks.forEach((b, i) => {
-        const div = document.createElement('div');
-        div.className = `block ${b.k ? 'block-key' : ''}`;
-        div.style.width = (b.o === 'h' ? b.l * cellSize : cellSize) - 4 + 'px';
-        div.style.height = (b.o === 'v' ? b.l * cellSize : cellSize) - 4 + 'px';
-        div.style.left = b.x * cellSize + 2 + 'px';
-        div.style.top = b.y * cellSize + 2 + 'px';
-
-        div.onpointerdown = (e) => {
-            div.setPointerCapture(e.pointerId);
-            let startX = e.clientX;
-            let startY = e.clientY;
-            let baseX = b.x;
-            let baseY = b.y;
-
-            div.onpointermove = (em) => {
-                let diff = b.o === 'h' ? (em.clientX - startX) : (em.clientY - startY);
-                let steps = Math.round(diff / cellSize);
-                
-                // Muoviamoci un passo alla volta per non saltare le collisioni
-                let currentStep = 0;
-                let direction = Math.sign(steps);
-                let absoluteSteps = Math.abs(steps);
-                
-                for (let s = 0; s < absoluteSteps; s++) {
-                    let nextX = b.o === 'h' ? b.x + direction : b.x;
-                    let nextY = b.o === 'v' ? b.y + direction : b.y;
-                    
-                    if (canPlace(nextX, nextY, b.l, b.o, i)) {
-                        b.x = nextX;
-                        b.y = nextY;
-                    } else {
-                        break; // Muro trovato, fermati
-                    }
-                }
-                
-                div.style.left = b.x * cellSize + 2 + 'px';
-                div.style.top = b.y * cellSize + 2 + 'px';
-                startX = em.clientX; startY = em.clientY; // Reset per fluidità
-            };
-            
-            div.onpointerup = () => {
-                div.onpointermove = null;
-                if (b.k && b.x === 4) {
-                    alert("LIVELLO SUPERATO!");
-                    state.lvl++; state.xp += 100;
-                    document.getElementById('lvl').innerText = state.lvl;
-                    document.getElementById('xp').innerText = state.xp;
-                    generateLevel();
-                }
-            };
-        };
-        grid.appendChild(div);
-    });
+function updateUI() {
+  document.getElementById("level").innerText = level;
+  document.getElementById("moves").innerText = moves;
 }
 
-function resetLevel() { state.blocks = JSON.parse(JSON.stringify(state.initial)); render(); }
-function nextLevel() { state.lvl++; generateLevel(); }
+function drawGrid() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      ctx.strokeStyle = "#333";
+      ctx.strokeRect(x * tileSize, y * tileSize, tileSize, tileSize);
+    }
+  }
+
+  walls.forEach(w => {
+    ctx.fillStyle = "#555";
+    ctx.fillRect(w.x * tileSize, w.y * tileSize, tileSize, tileSize);
+  });
+
+  ctx.fillStyle = "lime";
+  ctx.fillRect(exit.x * tileSize, exit.y * tileSize, tileSize, tileSize);
+
+  ctx.fillStyle = "orange";
+  ctx.fillRect(player.x * tileSize, player.y * tileSize, tileSize, tileSize);
+}
+
+function slide(dx, dy) {
+  if (animating) return;
+
+  let targetX = player.x;
+  let targetY = player.y;
+
+  while (true) {
+    let nx = targetX + dx;
+    let ny = targetY + dy;
+
+    if (
+      nx < 0 || nx >= size ||
+      ny < 0 || ny >= size ||
+      walls.some(w => w.x === nx && w.y === ny)
+    ) break;
+
+    targetX = nx;
+    targetY = ny;
+  }
+
+  if (targetX === player.x && targetY === player.y) return;
+
+  moves++;
+  updateUI();
+  animateMove(targetX, targetY);
+}
+
+function animateMove(tx, ty) {
+  animating = true;
+
+  const speed = 6;
+  let px = player.x * tileSize;
+  let py = player.y * tileSize;
+  const targetPx = tx * tileSize;
+  const targetPy = ty * tileSize;
+
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawGrid();
+
+    if (Math.abs(px - targetPx) > speed)
+      px += Math.sign(targetPx - px) * speed;
+    else
+      px = targetPx;
+
+    if (Math.abs(py - targetPy) > speed)
+      py += Math.sign(targetPy - py) * speed;
+    else
+      py = targetPy;
+
+    ctx.fillStyle = "orange";
+    ctx.fillRect(px, py, tileSize, tileSize);
+
+    if (px === targetPx && py === targetPy) {
+      player.x = tx;
+      player.y = ty;
+      animating = false;
+
+      if (player.x === exit.x && player.y === exit.y) {
+        level++;
+        generateLevel();
+      }
+
+      drawGrid();
+      return;
+    }
+
+    requestAnimationFrame(animate);
+  }
+
+  animate();
+}
+
+function resetLevel() {
+  generateLevel();
+}
+
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowUp") slide(0, -1);
+  if (e.key === "ArrowDown") slide(0, 1);
+  if (e.key === "ArrowLeft") slide(-1, 0);
+  if (e.key === "ArrowRight") slide(1, 0);
+});
 
 generateLevel();
+drawGrid();
