@@ -3,84 +3,60 @@ const cellSize = 50;
 let state = {
     lvl: parseInt(localStorage.getItem('mk_lvl')) || 1,
     xp: parseInt(localStorage.getItem('mk_xp')) || 0,
-    blocks: []
+    blocks: [],
+    initial: []
 };
 
-// 1. Verifica collisioni REALE (impedisce sovrapposizione)
-function canMove(idx, newPos) {
-    const b = state.blocks[idx];
-    const isH = b.o === 'h';
-    
-    // Confini della griglia (6x6)
-    if (newPos < 0 || newPos + b.l > 6) return false;
+// Carica dati iniziali
+document.getElementById('lvl').innerText = state.lvl;
+document.getElementById('xp').innerText = state.xp;
 
-    // Controllo contro TUTTI gli altri blocchi
-    for (let i = 0; i < state.blocks.length; i++) {
-        if (i === idx) continue;
-        const other = state.blocks[i];
-        
-        // Calcolo coordinate ipotetiche del pezzo che si muove
-        const bX = isH ? newPos : b.x;
-        const bY = isH ? b.y : newPos;
-        const bW = isH ? b.l : 1;
-        const bH = isH ? 1 : b.l;
+// 1. Logica Collisioni Rigida
+function isColliding(x, y, l, o, ignoreIdx) {
+    const w = o === 'h' ? l : 1;
+    const h = o === 'v' ? l : 1;
 
-        // Coordinate dell'altro pezzo
-        const oX = other.x;
-        const oY = other.y;
-        const oW = other.o === 'h' ? other.l : 1;
-        const oH = other.o === 'v' ? other.l : 1;
+    // Confini griglia
+    if (x < 0 || x + w > 6 || y < 0 || y + h > 6) return true;
 
-        // Algoritmo di collisione AABB (Standard per i giochi)
-        if (bX < oX + oW && bX + bW > oX && bY < oY + oH && bY + bH > oY) {
-            return false; // C'è un blocco sulla strada!
-        }
-    }
-    return true;
+    // Controllo contro altri blocchi
+    return state.blocks.some((b, i) => {
+        if (i === ignoreIdx) return false;
+        const bw = b.o === 'h' ? b.l : 1;
+        const bh = b.o === 'v' ? b.l : 1;
+        return x < b.x + bw && x + w > b.x && y < b.y + bh && y + h > b.y;
+    });
 }
 
-// 2. Generatore di livelli bilanciato
+// 2. Generatore di livelli (Cresce con il livello)
 function generateLevel() {
-    grid.innerHTML = '';
-    // La Chiave Gold (sempre riga 2)
-    let layout = [{x: 0, y: 2, l: 2, o: 'h', k: true}];
-    
-    // Numero di pezzi cresce col livello: da 5 a 12
-    let pieceCount = Math.min(5 + Math.floor(state.lvl / 2), 12);
+    let layout = [{x: 0, y: 2, l: 2, o: 'h', k: true}]; // La Chiave
+    let pieces = Math.min(4 + Math.floor(state.lvl / 2), 11);
 
-    for (let i = 0; i < pieceCount; i++) {
+    for (let i = 0; i < pieces; i++) {
         let attempts = 0;
-        while (attempts < 100) {
+        while (attempts < 150) {
             attempts++;
             let l = Math.random() > 0.8 ? 3 : 2;
             let o = Math.random() > 0.5 ? 'h' : 'v';
             let x = Math.floor(Math.random() * (6 - (o === 'h' ? l : 0)));
             let y = Math.floor(Math.random() * (6 - (o === 'v' ? l : 0)));
 
-            // REGOLE DI ACCESSIBILITÀ:
-            // Non permettiamo pezzi verticali che bloccano l'uscita a destra (x=5)
+            // Evita di bloccare l'uscita in modo permanente a destra
             if (o === 'v' && x === 5) continue;
-            // Non permettiamo pezzi che si sovrappongono alla nascita
-            if (!checkOverlap(x, y, l, o, layout)) {
+
+            if (!isColliding(x, y, l, o, -1)) {
                 layout.push({x, y, l, o, k: false});
                 break;
             }
         }
     }
     state.blocks = layout;
+    state.initial = JSON.parse(JSON.stringify(layout));
     render();
 }
 
-function checkOverlap(x, y, l, o, currentBlocks) {
-    const w = o === 'h' ? l : 1;
-    const h = o === 'v' ? l : 1;
-    return currentBlocks.some(b => {
-        const oW = b.o === 'h' ? b.l : 1;
-        const oH = b.o === 'v' ? b.l : 1;
-        return x < b.x + oW && x + w > b.x && y < b.y + oH && y + h > b.y;
-    });
-}
-
+// 3. Renderizzazione e Input
 function render() {
     grid.innerHTML = '';
     state.blocks.forEach((b, i) => {
@@ -93,23 +69,30 @@ function render() {
 
         div.onpointerdown = (e) => {
             div.setPointerCapture(e.pointerId);
-            let startClient = b.o === 'h' ? e.clientX : e.clientY;
-            let startCoord = b.o === 'h' ? b.x : b.y;
+            let startX = e.clientX;
+            let startY = e.clientY;
+            let origX = b.x;
+            let origY = b.y;
 
             div.onpointermove = (em) => {
-                let delta = Math.round(((b.o === 'h' ? em.clientX : em.clientY) - startClient) / cellSize);
-                let target = startCoord + delta;
+                let dx = Math.round((em.clientX - startX) / cellSize);
+                let dy = Math.round((em.clientY - startY) / cellSize);
                 
-                // Muove il pezzo solo se la strada è libera da ALTRI blocchi
-                if (canMove(i, target)) {
-                    if (b.o === 'h') b.x = target; else b.y = target;
+                let targetX = b.o === 'h' ? origX + dx : b.x;
+                let targetY = b.o === 'v' ? origY + dy : b.y;
+
+                // Controllo collisione prima di muovere
+                if (!isColliding(targetX, targetY, b.l, b.o, i)) {
+                    b.x = targetX;
+                    b.y = targetY;
                     div.style.left = b.x * cellSize + 'px';
                     div.style.top = b.y * cellSize + 'px';
                 }
             };
+
             div.onpointerup = () => {
                 div.onpointermove = null;
-                // Vittoria se la chiave tocca il bordo destro
+                // Vittoria!
                 if (b.k && b.x === 4) {
                     win();
                 }
@@ -122,10 +105,17 @@ function render() {
 function win() {
     state.xp += 100;
     state.lvl++;
-    localStorage.setItem('mk_xp', state.xp);
     localStorage.setItem('mk_lvl', state.lvl);
-    alert("LIVELLO COMPLETATO!");
+    localStorage.setItem('mk_xp', state.xp);
+    document.getElementById('lvl').innerText = state.lvl;
+    document.getElementById('xp').innerText = state.xp;
+    alert("NODO SBLOCCATO!");
     generateLevel();
+}
+
+function resetLevel() {
+    state.blocks = JSON.parse(JSON.stringify(state.initial));
+    render();
 }
 
 generateLevel();
