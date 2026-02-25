@@ -1,5 +1,5 @@
 const grid = document.getElementById("grid");
-const cellSize = 50; // Dimensione di una cella singola
+const cellSize = 50; // Dimensione fissa per ogni cella
 
 let level = 1;
 let moves = 0;
@@ -8,57 +8,55 @@ let timerInterval;
 let blocks = [];
 let initialPos = [];
 
-// Funzione che fa partire il tempo
-function startTimer() {
-    clearInterval(timerInterval); // Azzera timer precedenti
-    seconds = 0;
-    timerInterval = setInterval(() => {
-        seconds++;
-        let min = Math.floor(seconds / 60).toString().padStart(2, '0');
-        let sec = (seconds % 60).toString().padStart(2, '0');
-        document.getElementById("timer").innerText = `${min}:${sec}`;
-    }, 1000);
+// Funzione che gestisce il tempo
+function updateTimer() {
+    seconds++;
+    let min = Math.floor(seconds / 60).toString().padStart(2, '0');
+    let sec = (seconds % 60).toString().padStart(2, '0');
+    document.getElementById("timer").innerText = `${min}:${sec}`;
 }
 
-// Genera un nuovo livello garantendo che i pezzi non si sovrappongano
+// Genera i blocchi del livello
 function generateLevel() {
-    // La chiave d'oro è sempre in posizione (0, 2)
+    // Svuota tutto e resetta variabili
+    clearInterval(timerInterval);
+    seconds = 0;
+    moves = 0;
+    document.getElementById("timer").innerText = "00:00";
+    
+    // La chiave d'oro è il primo blocco (sempre orizzontale)
     blocks = [{ x: 0, y: 2, l: 2, o: 'h', k: true }];
     
-    let pieceCount = 4 + Math.min(level, 8); // Aumenta la difficoltà con i livelli
-
-    for (let i = 0; i < pieceCount; i++) {
+    // Aggiunge altri blocchi in base al livello
+    let count = 4 + Math.min(level, 8);
+    for (let i = 0; i < count; i++) {
         let attempts = 0;
         while (attempts < 100) {
             attempts++;
-            let l = Math.random() > 0.8 ? 3 : 2; // Lunghezza del pezzo
-            let o = Math.random() > 0.5 ? 'h' : 'v'; // Orientamento
+            let l = Math.random() > 0.8 ? 3 : 2; // Lunghezza 2 o 3
+            let o = Math.random() > 0.5 ? 'h' : 'v'; // h=orizzontale, v=verticale
             let x = Math.floor(Math.random() * (6 - (o === 'h' ? l : 0)));
             let y = Math.floor(Math.random() * (6 - (o === 'v' ? l : 0)));
 
-            // Controlla che non ci siano collisioni prima di piazzare
             if (!checkCollision(x, y, l, o, -1)) {
                 blocks.push({ x, y, l, o, k: false });
                 break;
             }
         }
     }
+    
     initialPos = JSON.parse(JSON.stringify(blocks)); // Salva per il reset
-    moves = 0;
     updateUI();
-    startTimer();
-    render();
+    timerInterval = setInterval(updateTimer, 1000); // Fa partire il timer
+    render(); // Disegna i blocchi
 }
 
-// Funzione che blocca i pezzi se vanno a sbattere
+// Controlla se un movimento è possibile o se sbatte contro altri
 function checkCollision(x, y, l, o, ignoreIdx) {
     const w = o === 'h' ? l : 1;
     const h = o === 'v' ? l : 1;
-
-    // Confini della griglia 6x6
     if (x < 0 || x + w > 6 || y < 0 || y + h > 6) return true;
 
-    // Collisione con altri pezzi
     return blocks.some((b, i) => {
         if (i === ignoreIdx) return false;
         const bw = b.o === 'h' ? b.l : 1;
@@ -67,18 +65,20 @@ function checkCollision(x, y, l, o, ignoreIdx) {
     });
 }
 
-// Disegna i blocchi nel HTML
+// Questa funzione crea fisicamente i blocchi nel div "grid"
 function render() {
-    grid.innerHTML = '';
+    grid.innerHTML = ''; // Svuota la griglia precedente
     blocks.forEach((b, i) => {
         const div = document.createElement("div");
         div.className = `block ${b.k ? 'block-key' : ''}`;
+        
+        // Calcola dimensioni e posizione (togliendo 4px per il margine interno)
         div.style.width = (b.o === 'h' ? b.l * cellSize : cellSize) - 6 + "px";
         div.style.height = (b.o === 'v' ? b.l * cellSize : cellSize) - 6 + "px";
         div.style.left = b.x * cellSize + 3 + "px";
         div.style.top = b.y * cellSize + 3 + "px";
 
-        // Gestione movimento
+        // Gestione del trascinamento (Mouse e Touch)
         div.onpointerdown = (e) => {
             div.setPointerCapture(e.pointerId);
             let lastX = e.clientX, lastY = e.clientY;
@@ -88,7 +88,6 @@ function render() {
                 let dy = em.clientY - lastY;
                 let step = b.o === 'h' ? dx : dy;
 
-                // Muovi solo se trascini per almeno metà cella
                 if (Math.abs(step) >= cellSize / 2) {
                     let dir = Math.sign(step);
                     let nx = b.x + (b.o === 'h' ? dir : 0);
@@ -106,16 +105,16 @@ function render() {
             };
             div.onpointerup = () => {
                 div.onpointermove = null;
-                // Vittoria!
+                // Vittoria se la chiave tocca il bordo destro
                 if (b.k && b.x === 4) {
                     clearInterval(timerInterval);
-                    alert(`Vinto in ${seconds} secondi e ${moves} mosse!`);
+                    alert("Ottimo! Hai liberato la chiave!");
                     level++;
                     generateLevel();
                 }
             };
         };
-        grid.appendChild(div);
+        grid.appendChild(div); // AGGIUNGE IL PEZZO ALLA GRIGLIA
     });
 }
 
@@ -134,10 +133,9 @@ function resetLevel() {
 function useHint() {
     const key = document.querySelector('.block-key');
     if(key) {
-        key.style.filter = "brightness(2)"; // Fa brillare la chiave
+        key.style.filter = "brightness(2)";
         setTimeout(() => key.style.filter = "none", 800);
     }
 }
 
-// Inizio gioco
-generateLevel();
+generateLevel(); // Avvia il gioco
