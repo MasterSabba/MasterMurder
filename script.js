@@ -1,147 +1,143 @@
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-
-const size = 8;
-const tileSize = canvas.width / size;
+const grid = document.getElementById("grid");
+const cellSize = 50; // Dimensione di una cella singola
 
 let level = 1;
 let moves = 0;
+let seconds = 0;
+let timerInterval;
+let blocks = [];
+let initialPos = [];
 
-let player;
-let exit;
-let walls = [];
-let animating = false;
+// Funzione che fa partire il tempo
+function startTimer() {
+    clearInterval(timerInterval); // Azzera timer precedenti
+    seconds = 0;
+    timerInterval = setInterval(() => {
+        seconds++;
+        let min = Math.floor(seconds / 60).toString().padStart(2, '0');
+        let sec = (seconds % 60).toString().padStart(2, '0');
+        document.getElementById("timer").innerText = `${min}:${sec}`;
+    }, 1000);
+}
 
+// Genera un nuovo livello garantendo che i pezzi non si sovrappongano
 function generateLevel() {
-  player = { x: 0, y: 0 };
-  exit = { x: size - 1, y: size - 1 };
-  walls = [];
+    // La chiave d'oro è sempre in posizione (0, 2)
+    blocks = [{ x: 0, y: 2, l: 2, o: 'h', k: true }];
+    
+    let pieceCount = 4 + Math.min(level, 8); // Aumenta la difficoltà con i livelli
 
-  let wallCount = 8 + level * 2;
+    for (let i = 0; i < pieceCount; i++) {
+        let attempts = 0;
+        while (attempts < 100) {
+            attempts++;
+            let l = Math.random() > 0.8 ? 3 : 2; // Lunghezza del pezzo
+            let o = Math.random() > 0.5 ? 'h' : 'v'; // Orientamento
+            let x = Math.floor(Math.random() * (6 - (o === 'h' ? l : 0)));
+            let y = Math.floor(Math.random() * (6 - (o === 'v' ? l : 0)));
 
-  for (let i = 0; i < wallCount; i++) {
-    let wx = Math.floor(Math.random() * size);
-    let wy = Math.floor(Math.random() * size);
-
-    if ((wx !== 0 || wy !== 0) && (wx !== exit.x || wy !== exit.y)) {
-      walls.push({ x: wx, y: wy });
+            // Controlla che non ci siano collisioni prima di piazzare
+            if (!checkCollision(x, y, l, o, -1)) {
+                blocks.push({ x, y, l, o, k: false });
+                break;
+            }
+        }
     }
-  }
+    initialPos = JSON.parse(JSON.stringify(blocks)); // Salva per il reset
+    moves = 0;
+    updateUI();
+    startTimer();
+    render();
+}
 
-  moves = 0;
-  updateUI();
+// Funzione che blocca i pezzi se vanno a sbattere
+function checkCollision(x, y, l, o, ignoreIdx) {
+    const w = o === 'h' ? l : 1;
+    const h = o === 'v' ? l : 1;
+
+    // Confini della griglia 6x6
+    if (x < 0 || x + w > 6 || y < 0 || y + h > 6) return true;
+
+    // Collisione con altri pezzi
+    return blocks.some((b, i) => {
+        if (i === ignoreIdx) return false;
+        const bw = b.o === 'h' ? b.l : 1;
+        const bh = b.o === 'v' ? b.l : 1;
+        return x < b.x + bw && x + w > b.x && y < b.y + bh && y + h > b.y;
+    });
+}
+
+// Disegna i blocchi nel HTML
+function render() {
+    grid.innerHTML = '';
+    blocks.forEach((b, i) => {
+        const div = document.createElement("div");
+        div.className = `block ${b.k ? 'block-key' : ''}`;
+        div.style.width = (b.o === 'h' ? b.l * cellSize : cellSize) - 6 + "px";
+        div.style.height = (b.o === 'v' ? b.l * cellSize : cellSize) - 6 + "px";
+        div.style.left = b.x * cellSize + 3 + "px";
+        div.style.top = b.y * cellSize + 3 + "px";
+
+        // Gestione movimento
+        div.onpointerdown = (e) => {
+            div.setPointerCapture(e.pointerId);
+            let lastX = e.clientX, lastY = e.clientY;
+
+            div.onpointermove = (em) => {
+                let dx = em.clientX - lastX;
+                let dy = em.clientY - lastY;
+                let step = b.o === 'h' ? dx : dy;
+
+                // Muovi solo se trascini per almeno metà cella
+                if (Math.abs(step) >= cellSize / 2) {
+                    let dir = Math.sign(step);
+                    let nx = b.x + (b.o === 'h' ? dir : 0);
+                    let ny = b.y + (b.o === 'v' ? dir : 0);
+
+                    if (!checkCollision(nx, ny, b.l, b.o, i)) {
+                        b.x = nx; b.y = ny;
+                        lastX = em.clientX; lastY = em.clientY;
+                        moves++;
+                        updateUI();
+                        div.style.left = b.x * cellSize + 3 + "px";
+                        div.style.top = b.y * cellSize + 3 + "px";
+                    }
+                }
+            };
+            div.onpointerup = () => {
+                div.onpointermove = null;
+                // Vittoria!
+                if (b.k && b.x === 4) {
+                    clearInterval(timerInterval);
+                    alert(`Vinto in ${seconds} secondi e ${moves} mosse!`);
+                    level++;
+                    generateLevel();
+                }
+            };
+        };
+        grid.appendChild(div);
+    });
 }
 
 function updateUI() {
-  document.getElementById("level").innerText = level;
-  document.getElementById("moves").innerText = moves;
-}
-
-function drawGrid() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  for (let y = 0; y < size; y++) {
-    for (let x = 0; x < size; x++) {
-      ctx.strokeStyle = "#333";
-      ctx.strokeRect(x * tileSize, y * tileSize, tileSize, tileSize);
-    }
-  }
-
-  walls.forEach(w => {
-    ctx.fillStyle = "#555";
-    ctx.fillRect(w.x * tileSize, w.y * tileSize, tileSize, tileSize);
-  });
-
-  ctx.fillStyle = "lime";
-  ctx.fillRect(exit.x * tileSize, exit.y * tileSize, tileSize, tileSize);
-
-  ctx.fillStyle = "orange";
-  ctx.fillRect(player.x * tileSize, player.y * tileSize, tileSize, tileSize);
-}
-
-function slide(dx, dy) {
-  if (animating) return;
-
-  let targetX = player.x;
-  let targetY = player.y;
-
-  while (true) {
-    let nx = targetX + dx;
-    let ny = targetY + dy;
-
-    if (
-      nx < 0 || nx >= size ||
-      ny < 0 || ny >= size ||
-      walls.some(w => w.x === nx && w.y === ny)
-    ) break;
-
-    targetX = nx;
-    targetY = ny;
-  }
-
-  if (targetX === player.x && targetY === player.y) return;
-
-  moves++;
-  updateUI();
-  animateMove(targetX, targetY);
-}
-
-function animateMove(tx, ty) {
-  animating = true;
-
-  const speed = 6;
-  let px = player.x * tileSize;
-  let py = player.y * tileSize;
-  const targetPx = tx * tileSize;
-  const targetPy = ty * tileSize;
-
-  function animate() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawGrid();
-
-    if (Math.abs(px - targetPx) > speed)
-      px += Math.sign(targetPx - px) * speed;
-    else
-      px = targetPx;
-
-    if (Math.abs(py - targetPy) > speed)
-      py += Math.sign(targetPy - py) * speed;
-    else
-      py = targetPy;
-
-    ctx.fillStyle = "orange";
-    ctx.fillRect(px, py, tileSize, tileSize);
-
-    if (px === targetPx && py === targetPy) {
-      player.x = tx;
-      player.y = ty;
-      animating = false;
-
-      if (player.x === exit.x && player.y === exit.y) {
-        level++;
-        generateLevel();
-      }
-
-      drawGrid();
-      return;
-    }
-
-    requestAnimationFrame(animate);
-  }
-
-  animate();
+    document.getElementById("level").innerText = level;
+    document.getElementById("moves").innerText = moves;
 }
 
 function resetLevel() {
-  generateLevel();
+    blocks = JSON.parse(JSON.stringify(initialPos));
+    moves = 0;
+    updateUI();
+    render();
 }
 
-document.addEventListener("keydown", e => {
-  if (e.key === "ArrowUp") slide(0, -1);
-  if (e.key === "ArrowDown") slide(0, 1);
-  if (e.key === "ArrowLeft") slide(-1, 0);
-  if (e.key === "ArrowRight") slide(1, 0);
-});
+function useHint() {
+    const key = document.querySelector('.block-key');
+    if(key) {
+        key.style.filter = "brightness(2)"; // Fa brillare la chiave
+        setTimeout(() => key.style.filter = "none", 800);
+    }
+}
 
+// Inizio gioco
 generateLevel();
-drawGrid();
