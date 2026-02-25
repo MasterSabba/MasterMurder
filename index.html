@@ -1,21 +1,25 @@
-<!DOCTYPE html> <!-- Html 5 -->
-<html lang="it"> <!-- Italiano -->
-  
-<head> <!-- Info che non si vedono  -->
-<meta charset="UTF-8"> <!-- Permette l'usco di caratteri come accenti, simboli...  -->
-<title>Free The Key Mini</title> <!-- Titolo nella barra di ricerca -->
-<link rel="stylesheet" href="style.css"> <!-- Collega il css  -->
-</head>
-  
-<body> <!-- Info che si vedono  -->
-<a href="https://mastersabba.github.io/MasterSabba/" target="_self" style="position: fixed; top: 10px; left: 10px; z-index: 9999; text-decoration: none; color: rgba(255, 255, 255, 0.2); font-family: sans-serif; font-size: 24px; padding: 10px; transition: color 0.3s ease;">✕</a>
-<h1>Free The Key</h1> <!-- Titolo grosso -->
-<p>Livello: <span id="level">1</span> | Mosse: <span id="moves">0</span></p> <!-- Mostra livello e mosse, span id = per aggiornare il js-->
-<canvas id="gameCanvas" width="400" height="400"></canvas> <!-- comunica con js riguardo la griglia, dove creerò la griglia in css --> 
-<br> <!-- a capo --> 
-<button onclick="resetLevel()">Reset</button> <!-- Pulsante che se cliccato attiva la funzione reserLevel  -->
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8"> <title>Free The Key: Master Edition</title>
+    <link rel="stylesheet" href="style.css"> </head>
+<body>
+    <a href="#" class="back-link">✕</a>
+    
+    <h1>Free The Key</h1>
+    
+    <div class="stats">
+        <p>Livello: <span id="level">1</span></p>
+        <p>Mosse: <span id="moves">0</span></p>
+        <p>Tempo: <span id="timer">00:00</span></p>
+    </div>
 
-<script src="game.js"></script> <!-- Collega il js -->
-</body>
-  
+    <div class="board-frame">
+        <div id="grid" class="grid"></div>
+    </div>
+
+    <div class="controls">
+        <button onclick="resetLevel()">Reset</button> <button class="hint-btn" onclick="useHint()">Suggerimento</button> </div>
+
+    <script src="game.js"></script> </body>
 </html>
