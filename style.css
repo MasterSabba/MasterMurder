@@ -1,18 +1,75 @@
 body {
-  text-align: center; /* Centra tutto */
-  font-family: Arial, sans-serif; /* Imposta carattere arial, se non c’è usane qualsiasi altro */
-  background: #111; /* Colore sfondo pagina */
-  color: white; /* Colore del testo*/
+    text-align: center; /* Centra tutto */
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #1a110a; /* Sfondo scuro tipo officina */
+    color: #f0e6d2; /* Testo color crema */
+    margin: 0;
+    touch-action: none; /* Evita lo scroll mentre muovi i pezzi */
 }
 
-canvas {
-  background: #222; /* Colore sfondo canvas (grglia */
-  border: 3px solid white; /* Bordo grglia spesso 3px */
-  margin-top: 10px; /* Distanza sopra il canvas */
+.stats {
+    display: flex; /* Mette gli elementi uno a fianco all'altro */
+    justify-content: center;
+    gap: 20px;
+    font-weight: bold;
 }
 
+/* Cornice di legno che racchiude il gioco */
+.board-frame {
+    display: inline-block;
+    padding: 15px;
+    background: #3d2616;
+    border-radius: 20px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+    border: 2px solid #2a180d;
+}
+
+/* La griglia di gioco scavata */
+.grid {
+    width: 300px;
+    height: 300px;
+    position: relative;
+    background: #2a180d;
+    border-radius: 10px;
+    box-shadow: inset 6px 6px 15px rgba(0,0,0,0.6);
+}
+
+/* Stile dei blocchi di legno (Neumorphic) */
+.block {
+    position: absolute;
+    border-radius: 14px; /* Bordi molto arrotondati */
+    cursor: grab;
+    box-sizing: border-box;
+    border: 3px solid #5a3a1f;
+    background: linear-gradient(145deg, #9b6b3d, #7a4f28); /* Effetto luce diagonale */
+    
+    /* Luci e ombre interne/esterne per il senso di solidità */
+    box-shadow: inset -4px -4px 8px rgba(0,0,0,0.4),
+                inset 4px 4px 8px rgba(255,255,255,0.15),
+                6px 6px 12px rgba(0,0,0,0.5);
+    transition: transform 0.1s; /* Piccola animazione quando clicchi */
+}
+
+/* La chiave d'oro */
+.block-key {
+    background: linear-gradient(145deg, #ffd700, #b8860b);
+    border-color: #d4af37;
+    z-index: 10;
+}
+
+/* Pulsanti */
 button {
-  margin-top: 10px; /* Distanza sopra il pulsante */
-  padding: 8px 16px; /* Spazio interno al pulsante */
-  font-size: 16px; /* Grandezza del font */
+    margin-top: 20px;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    background: #5a3a1f;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #2a180d;
 }
+
+button:active { transform: translateY(2px); box-shadow: 0 2px 0 #2a180d; }
+.hint-btn { background: #8b6b3d; margin-left: 10px; }
