@@ -9,6 +9,7 @@ body {
     font-family: 'Segoe UI', Arial, sans-serif;
     overflow: hidden;
     touch-action: none;
+    user-select: none;
 }
 
 .game-container {
@@ -31,29 +32,15 @@ body {
     border-radius: 20px;
     box-shadow: 0 15px 35px rgba(0,0,0,0.8);
     border: 3px solid #2a180d;
-    position: relative;
 }
 
 .grid {
-    width: 300px; /* 6 celle * 50px */
+    width: 300px;
     height: 300px;
     position: relative;
     background: #2a180d;
     border-radius: 10px;
     box-shadow: inset 6px 6px 15px rgba(0,0,0,0.6);
-    overflow: visible;
-}
-
-/* Porta di uscita dorata */
-.exit-gate {
-    position: absolute;
-    right: -12px;
-    top: 100px; /* Riga della chiave (y=2 * 50px) */
-    width: 15px;
-    height: 50px;
-    background: linear-gradient(to right, #b8860b, #ffd700);
-    border-radius: 0 5px 5px 0;
-    box-shadow: 5px 0 15px rgba(255, 215, 0, 0.3);
 }
 
 .block {
@@ -64,11 +51,8 @@ body {
     background: linear-gradient(145deg, #9b6b3d, #7a4f28);
     cursor: grab;
     z-index: 5;
-    box-shadow: inset -4px -4px 8px rgba(0,0,0,0.4),
-                inset 4px 4px 8px rgba(255,255,255,0.1),
-                4px 4px 8px rgba(0,0,0,0.5);
+    box-shadow: 4px 4px 8px rgba(0,0,0,0.5);
     transition: left 0.1s, top 0.1s;
-    touch-action: none;
 }
 
 .block-key {
@@ -90,7 +74,6 @@ body {
 }
 
 .btn-wood:active { transform: translateY(2px); box-shadow: 0 2px 0 #000; }
-.btn-hint { background: #8b6b3d; }
 
 .back-link {
     position: fixed; top: 20px; left: 20px;
