@@ -1,27 +1,22 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Free The Key Wood</title>
-    <link rel="stylesheet" href="style.css">
-</head>
+    <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free The Key: Wood Edition</title>
+    <link rel="stylesheet" href="style.css"> </head>
 <body>
-    <div class="game-container">
-        <a href="https://mastersabba.github.io/MasterSabba/" class="back-home">✕</a>
+    <div class="game-container"> <a href="https://mastersabba.github.io/MasterSabba/" class="back-link">✕</a>
         <h1>Free The Key</h1>
         
-        <div class="info-bar">
-            <span>Livello: <b id="level">1</b></span>
-            <span>Mosse: <b id="moves">0</b></span>
-            <span>Tempo: <b id="timer">00:00</b></span>
-        </div>
+        <div class="stats">
+            <p>Livello: <span id="level">1</span></p>
+            <p>Mosse: <span id="moves">0</span></p>
+            <p>XP: <span id="xp">0</span></p> </div>
 
         <div class="board-frame">
-            <div id="grid" class="grid"></div>
-        </div>
+            <div id="grid" class="grid"></div> </div>
 
-        <div class="button-group">
+        <div class="controls">
             <button onclick="resetLevel()">Reset</button>
             <button class="hint-btn" onclick="useHint()">💡 Hint</button>
         </div>
