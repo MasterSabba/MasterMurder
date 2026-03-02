@@ -1,15 +1,14 @@
-/* Centratura totale dello schermo */
 body {
     margin: 0;
     height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    background: #1a110a; /* Sfondo scuro legno */
+    background: #1a110a;
     color: #f0e6d2;
     font-family: 'Segoe UI', Arial, sans-serif;
     overflow: hidden;
-    touch-action: none; /* Evita lo scroll mentre muovi i pezzi */
+    touch-action: none;
 }
 
 .game-container {
@@ -26,52 +25,58 @@ body {
     margin-bottom: 15px;
 }
 
-/* Cornice di legno esterna */
 .board-frame {
     padding: 12px;
     background: #3d2616;
     border-radius: 20px;
     box-shadow: 0 15px 35px rgba(0,0,0,0.8);
     border: 3px solid #2a180d;
+    position: relative;
 }
 
-/* La griglia scavata */
 .grid {
-    width: 300px;
+    width: 300px; /* 6 celle * 50px */
     height: 300px;
-    position: relative; /* Indispensabile per posizionare i blocchi dentro */
+    position: relative;
     background: #2a180d;
     border-radius: 10px;
     box-shadow: inset 6px 6px 15px rgba(0,0,0,0.6);
+    overflow: visible;
 }
 
-/* Stile dei blocchi di legno */
+/* Porta di uscita dorata */
+.exit-gate {
+    position: absolute;
+    right: -12px;
+    top: 100px; /* Riga della chiave (y=2 * 50px) */
+    width: 15px;
+    height: 50px;
+    background: linear-gradient(to right, #b8860b, #ffd700);
+    border-radius: 0 5px 5px 0;
+    box-shadow: 5px 0 15px rgba(255, 215, 0, 0.3);
+}
+
 .block {
-    position: absolute; /* FONDAMENTALE: permette di muoverli */
-    border-radius: 14px;
+    position: absolute;
+    border-radius: 10px;
     box-sizing: border-box;
     border: 3px solid #5a3a1f;
     background: linear-gradient(145deg, #9b6b3d, #7a4f28);
     cursor: grab;
     z-index: 5;
-    
-    /* Luci e ombre Neumorphic */
     box-shadow: inset -4px -4px 8px rgba(0,0,0,0.4),
-                inset 4px 4px 8px rgba(255,255,255,0.15),
-                6px 6px 12px rgba(0,0,0,0.5);
-    
-    /* Animazione fluida del movimento */
+                inset 4px 4px 8px rgba(255,255,255,0.1),
+                4px 4px 8px rgba(0,0,0,0.5);
     transition: left 0.1s, top 0.1s;
+    touch-action: none;
 }
 
-/* La chiave d'oro */
 .block-key {
     background: linear-gradient(145deg, #ffd700, #b8860b);
     border-color: #d4af37;
-    z-index: 10; /* Sta sopra agli altri blocchi */
+    z-index: 10;
 }
 
-/* Pulsanti stile legno */
 .btn-wood {
     margin: 20px 5px;
     padding: 10px 20px;
