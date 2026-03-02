@@ -1,40 +1,47 @@
-const grid = document.getElementById("grid");
-const cellSize = 50; // Dimensione fissa per ogni cella
+let grid, levelDisp, movesDisp, timerDisp;
+const cellSize = 50;
 
-let level = 1;
+// Variabili di stato (con caricamento da LocalStorage)
+let level = parseInt(localStorage.getItem('mk_level')) || 1;
 let moves = 0;
 let seconds = 0;
 let timerInterval;
 let blocks = [];
 let initialPos = [];
 
-// Funzione che gestisce il tempo
-function updateTimer() {
-    seconds++;
-    let min = Math.floor(seconds / 60).toString().padStart(2, '0');
-    let sec = (seconds % 60).toString().padStart(2, '0');
-    document.getElementById("timer").innerText = `${min}:${sec}`;
-}
+// Funzione principale che avvia tutto al caricamento della pagina
+window.onload = () => {
+    grid = document.getElementById("grid");
+    levelDisp = document.getElementById("level");
+    movesDisp = document.getElementById("moves");
+    timerDisp = document.getElementById("timer");
+    
+    generateLevel();
+};
 
-// Genera i blocchi del livello
-function generateLevel() {
-    // Svuota tutto e resetta variabili
+function startTimer() {
     clearInterval(timerInterval);
     seconds = 0;
-    moves = 0;
-    document.getElementById("timer").innerText = "00:00";
-    
-    // La chiave d'oro è il primo blocco (sempre orizzontale)
+    timerInterval = setInterval(() => {
+        seconds++;
+        let min = Math.floor(seconds / 60).toString().padStart(2, '0');
+        let sec = (seconds % 60).toString().padStart(2, '0');
+        timerDisp.innerText = `${min}:${sec}`;
+    }, 1000);
+}
+
+function generateLevel() {
+    // La chiave d'oro
     blocks = [{ x: 0, y: 2, l: 2, o: 'h', k: true }];
     
-    // Aggiunge altri blocchi in base al livello
-    let count = 4 + Math.min(level, 8);
+    // Generazione pezzi casuali
+    let count = 4 + Math.min(level, 7);
     for (let i = 0; i < count; i++) {
         let attempts = 0;
         while (attempts < 100) {
             attempts++;
-            let l = Math.random() > 0.8 ? 3 : 2; // Lunghezza 2 o 3
-            let o = Math.random() > 0.5 ? 'h' : 'v'; // h=orizzontale, v=verticale
+            let l = Math.random() > 0.8 ? 3 : 2;
+            let o = Math.random() > 0.5 ? 'h' : 'v';
             let x = Math.floor(Math.random() * (6 - (o === 'h' ? l : 0)));
             let y = Math.floor(Math.random() * (6 - (o === 'v' ? l : 0)));
 
@@ -44,14 +51,13 @@ function generateLevel() {
             }
         }
     }
-    
-    initialPos = JSON.parse(JSON.stringify(blocks)); // Salva per il reset
+    initialPos = JSON.parse(JSON.stringify(blocks));
+    moves = 0;
     updateUI();
-    timerInterval = setInterval(updateTimer, 1000); // Fa partire il timer
-    render(); // Disegna i blocchi
+    startTimer();
+    render();
 }
 
-// Controlla se un movimento è possibile o se sbatte contro altri
 function checkCollision(x, y, l, o, ignoreIdx) {
     const w = o === 'h' ? l : 1;
     const h = o === 'v' ? l : 1;
@@ -65,20 +71,19 @@ function checkCollision(x, y, l, o, ignoreIdx) {
     });
 }
 
-// Questa funzione crea fisicamente i blocchi nel div "grid"
 function render() {
-    grid.innerHTML = ''; // Svuota la griglia precedente
+    grid.innerHTML = ''; // Svuota la griglia
     blocks.forEach((b, i) => {
         const div = document.createElement("div");
         div.className = `block ${b.k ? 'block-key' : ''}`;
         
-        // Calcola dimensioni e posizione (togliendo 4px per il margine interno)
+        // Dimensioni e posizione
         div.style.width = (b.o === 'h' ? b.l * cellSize : cellSize) - 6 + "px";
         div.style.height = (b.o === 'v' ? b.l * cellSize : cellSize) - 6 + "px";
         div.style.left = b.x * cellSize + 3 + "px";
         div.style.top = b.y * cellSize + 3 + "px";
 
-        // Gestione del trascinamento (Mouse e Touch)
+        // Trascinamento
         div.onpointerdown = (e) => {
             div.setPointerCapture(e.pointerId);
             let lastX = e.clientX, lastY = e.clientY;
@@ -105,22 +110,22 @@ function render() {
             };
             div.onpointerup = () => {
                 div.onpointermove = null;
-                // Vittoria se la chiave tocca il bordo destro
                 if (b.k && b.x === 4) {
                     clearInterval(timerInterval);
-                    alert("Ottimo! Hai liberato la chiave!");
+                    alert("Livello Superato!");
                     level++;
+                    localStorage.setItem('mk_level', level); // Salvataggio automatico
                     generateLevel();
                 }
             };
         };
-        grid.appendChild(div); // AGGIUNGE IL PEZZO ALLA GRIGLIA
+        grid.appendChild(div); // AGGIUNGE FISICAMENTE IL BLOCCO
     });
 }
 
 function updateUI() {
-    document.getElementById("level").innerText = level;
-    document.getElementById("moves").innerText = moves;
+    levelDisp.innerText = level;
+    movesDisp.innerText = moves;
 }
 
 function resetLevel() {
@@ -137,5 +142,3 @@ function useHint() {
         setTimeout(() => key.style.filter = "none", 800);
     }
 }
-
-generateLevel(); // Avvia il gioco
