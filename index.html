@@ -2,43 +2,49 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Free The Key: Wood Edition</title>
-    <link rel="stylesheet" href="style.css"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Master Key</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    
-    <button id="back-to-selection" class="back-link">&#x2715;</button>
+    <div id="game-ui">
+        <div class="header">
+            <div class="stat-item">⏳ <span id="timer">00:00</span></div>
+            <div class="stat-item">💎 <span id="xp">0</span></div>
+            <button class="btn-menu-top" onclick="toggleMenu()">MENU</button>
+        </div>
 
-    <div id="level-selection-interface" class="interface selection-active">
-        <h1>Seleziona Livello</h1>
-        
-        <div id="level-grid" class="level-grid">
-            </div>
+        <div class="level-tag">LIVELLO <span id="level">1</span></div>
 
-        <div class="selection-controls">
-            <button id="prev-page" class="nav-btn">&lt;</button>
-            <span id="page-indicator">1 / 5</span>
-            <button id="next-page" class="nav-btn">&gt;</button>
+        <div class="board-frame">
+            <div id="grid" class="grid"></div>
+        </div>
+
+        <div class="footer-controls">
+            <button class="btn-wood" onclick="resetLevel()">RESET</button>
+            <button id="hint-btn" class="btn-wood hint" onclick="useHint()">HINT (500 XP)</button>
         </div>
     </div>
 
-    <div id="game-interface" class="interface" style="display: none;">
-        <div class="game-container">
-            <h1>Livello <span id="current-level-display">1</span></h1>
-            
-            <div class="board-frame">
-                <div id="grid" class="grid">
-                    </div>
-            </div>
+    <div id="level-menu" class="overlay">
+        <div class="modal">
+            <h2>LIVELLI</h2>
+            <div id="level-grid" class="level-grid"></div>
+            <button class="btn-wood" onclick="toggleMenu()">CHIUDI</button>
+        </div>
+    </div>
 
-            <div class="controls">
-                <button class="btn-wood" onclick="resetLevel()">Reset</button> 
-                <button id="complete-level-btn" class="btn-wood btn-complete">Completa (Test)</button>
+    <div id="victory-screen" class="overlay">
+        <div class="modal victory">
+            <h1>LIVELLO CRIPTATO</h1>
+            <p id="victory-xp-msg"></p>
+            <div class="victory-btns">
+                <button class="btn-wood" onclick="goToLevelsFromVictory()">LIVELLI</button>
+                <button class="btn-wood gold" onclick="nextLevel()">CONTINUA</button>
             </div>
         </div>
     </div>
 
-    <script src="game.js"></script> 
+    <script src="script.js"></script>
 </body>
 </html>
