@@ -5,104 +5,85 @@ let level = parseInt(localStorage.getItem('mk_level')) || 1;
 let unlockedLevel = parseInt(localStorage.getItem('mk_unlocked')) || 1;
 let xp = parseInt(localStorage.getItem('mk_xp')) || 0;
 let rewardedLevels = JSON.parse(localStorage.getItem('mk_rewarded')) || [];
+let ownedSkins = JSON.parse(localStorage.getItem('mk_skins')) || ['default'];
+let currentSkin = localStorage.getItem('mk_currentSkin') || 'default';
 
-window.onload = () => { updateUI(); loadLevel(level); };
+window.onload = () => {
+    applySkin(currentSkin);
+    updateUI();
+    loadLevel(level);
+};
 
-// --- GENERAZIONE LIVELLI GARANTITI ---
+// --- GENERAZIONE DETERMINISTICA E SICURA ---
 function generateHardLevel(num) {
-    // La Chiave
+    // Usiamo il numero del livello come seed per renderlo sempre uguale
+    let seed = num * 1234.5;
+    const rng = () => {
+        seed = Math.sin(seed) * 10000;
+        return seed - Math.floor(seed);
+    };
+
     blocks = [{ x: 0, y: 2, l: 2, o: 'h', k: true }];
-    
-    // Numero blocchi: aumentano con il livello ma con un limite di densità
-    let targetCount = 9 + Math.min(Math.floor(num / 4), 6); 
+    let targetCount = 7 + Math.min(Math.floor(num / 5), 8);
     let attempts = 0;
 
     while (blocks.length < targetCount && attempts < 1000) {
         attempts++;
-        let l = Math.random() > 0.7 ? 3 : 2;
-        let o = Math.random() > 0.5 ? 'h' : 'v';
-        let x = Math.floor(Math.random() * (6 - (o === 'h' ? l : 1)));
-        let y = Math.floor(Math.random() * (6 - (o === 'v' ? l : 1)));
+        let l = rng() > 0.8 ? 3 : 2;
+        let o = rng() > 0.5 ? 'h' : 'v';
+        let x = Math.floor(rng() * (6 - (o === 'h' ? l : 1)));
+        let y = Math.floor(rng() * (6 - (o === 'v' ? l : 1)));
 
-        // EVITA LIVELLI IMPOSSIBILI:
-        if (o === 'h' && y === 2) continue; // Mai bloccare orizzontalmente la riga 2
-        if (o === 'v' && x >= 4 && y <= 2 && y+l > 2) {
-            // Se metti un pezzo verticale davanti all'uscita, assicurati che abbia spazio per salire o scendere
-            if (y === 0 && l === 3) continue; // Troppo lungo, tasperebbe tutto
+        // REGOLE DI SOLVIBILITÀ
+        if (o === 'h' && y === 2) continue; // Mai blocchi orizzontali sulla riga della chiave
+        
+        // Se è un blocco verticale da 3 sulla corsia d'uscita (x >= 2)
+        if (o === 'v' && l === 3 && x >= 2) {
+            // Deve poter scivolare tutto su (y=0) o tutto giù (y=3)
+            // Per semplicità nei livelli deterministici, limitiamo la loro posizione
+            y = rng() > 0.5 ? 0 : 3;
         }
 
         if (!checkCollision(x, y, l, o, -1)) {
             blocks.push({ x, y, l, o, k: false });
         }
     }
-    // Salva lo stato per il RESET
     initialPos = JSON.parse(JSON.stringify(blocks));
 }
 
-// --- LOGICA INDIZIO (HINT) MIRATA ---
-function useHint() {
-    if (xp < 500) return;
-    
-    // 1. Trova il blocco critico
-    let targetIdx = -1;
-    const key = blocks[0];
-
-    // Cerca il primo blocco verticale che blocca la chiave a destra
-    for (let i = 1; i < blocks.length; i++) {
-        let b = blocks[i];
-        if (b.o === 'v' && b.x > key.x && b.y <= 2 && (b.y + b.l) > 2) {
-            targetIdx = i;
-            break;
-        }
-    }
-
-    // Se non c'è un blocco davanti alla chiave, aiuta con l'ultimo ostacolo all'uscita
-    if (targetIdx === -1) {
-        targetIdx = blocks.findIndex((b, i) => i > 0 && b.x >= 4);
-    }
-
-    // Se proprio non trova nulla, prende il pezzo più vicino alla chiave
-    if (targetIdx === -1) targetIdx = 1;
-
-    // Sottrai XP e anima
-    xp -= 500;
-    localStorage.setItem('mk_xp', xp);
-    updateUI();
-
-    animateHint(targetIdx);
+// --- LOGICA SKIN SHOP ---
+function toggleSkinShop() {
+    const s = document.getElementById('skin-shop');
+    s.style.display = (s.style.display === 'flex') ? 'none' : 'flex';
 }
 
-function animateHint(idx) {
-    const b = blocks[idx];
-    const el = document.getElementById(`block-${idx}`);
-    if (!el) return;
-
-    el.style.transition = "all 0.4s ease-in-out";
-    const oldX = b.x, oldY = b.y;
-
-    // Calcola mossa logica: se è verticale, prova a spostarlo su o giù
-    let moveX = b.x, moveY = b.y;
-    if (b.o === 'v') {
-        moveY = (b.y > 0 && !checkCollision(b.x, b.y-1, b.l, b.o, idx)) ? b.y - 1 : b.y + 1;
+function buySkin(id, cost) {
+    if (ownedSkins.includes(id)) {
+        applySkin(id);
+        toggleSkinShop();
+        return;
+    }
+    if (xp >= cost) {
+        xp -= cost;
+        ownedSkins.push(id);
+        localStorage.setItem('mk_xp', xp);
+        localStorage.setItem('mk_skins', JSON.stringify(ownedSkins));
+        applySkin(id);
+        updateUI();
+        toggleSkinShop();
+        alert("Skin sbloccata!");
     } else {
-        moveX = (b.x > 0 && !checkCollision(b.x-1, b.y, b.l, b.o, idx)) ? b.x - 1 : b.x + 1;
+        alert("💎 XP insufficienti!");
     }
-
-    el.style.left = (moveX * cellSize + 2) + "px";
-    el.style.top = (moveY * cellSize + 2) + "px";
-    el.classList.add('ghost-hint');
-
-    setTimeout(() => {
-        el.style.left = (oldX * cellSize + 2) + "px";
-        el.style.top = (oldY * cellSize + 2) + "px";
-        setTimeout(() => {
-            el.style.transition = "";
-            el.classList.remove('ghost-hint');
-        }, 400);
-    }, 800);
 }
 
-// --- RESTO DEL CODICE (MOVIMENTO E UI) ---
+function applySkin(id) {
+    document.body.className = 'skin-' + id;
+    currentSkin = id;
+    localStorage.setItem('mk_currentSkin', id);
+}
+
+// --- GESTIONE GIOCO ---
 function loadLevel(num) {
     level = num;
     localStorage.setItem('mk_level', level);
@@ -118,7 +99,6 @@ function render() {
     blocks.forEach((b, i) => {
         const div = document.createElement("div");
         div.className = `block ${b.k ? 'block-key' : ''}`;
-        div.id = `block-${i}`;
         div.style.width = (b.o === 'h' ? b.l * cellSize : cellSize) - 4 + "px";
         div.style.height = (b.o === 'v' ? b.l * cellSize : cellSize) - 4 + "px";
         div.style.left = (b.x * cellSize + 2) + "px";
@@ -170,12 +150,12 @@ function handleWin() {
     const key = document.querySelector('.block-key');
     key.style.transition = "left 0.5s ease-in"; key.style.left = "350px";
     setTimeout(() => {
-        let msg = "GIÀ FATTO (0 XP)";
+        let msg = "GIÀ COMPLETATO";
         if (!rewardedLevels.includes(level)) {
             xp += 100; rewardedLevels.push(level);
             localStorage.setItem('mk_rewarded', JSON.stringify(rewardedLevels));
             localStorage.setItem('mk_xp', xp);
-            msg = "+100 XP!";
+            msg = "+100 💎";
         }
         if (level === unlockedLevel) { unlockedLevel++; localStorage.setItem('mk_unlocked', unlockedLevel); }
         document.getElementById("victory-xp-msg").innerText = msg;
@@ -195,13 +175,12 @@ function resetTimer() { clearInterval(timerInterval); seconds = 0; document.getE
 function updateUI() { 
     document.getElementById("xp").innerText = xp; 
     document.getElementById("level").innerText = level; 
-    document.getElementById("hint-btn").disabled = xp < 500; 
 }
 function resetLevel() { blocks = JSON.parse(JSON.stringify(initialPos)); render(); resetTimer(); startTimer(); }
+
 function toggleMenu() { 
     const m = document.getElementById("level-menu"); 
     const isOpening = m.style.display !== "flex";
-    if (isOpening) document.getElementById("victory-screen").style.display = "none";
     m.style.display = isOpening ? "flex" : "none";
     if (isOpening) {
         const g = document.getElementById("level-grid"); g.innerHTML = '';
@@ -214,5 +193,5 @@ function toggleMenu() {
         }
     }
 }
-function goToLevelsFromVictory() { document.getElementById("victory-screen").style.display = "none"; toggleMenu(); }
+function goToLevelsFromVictory() { toggleMenu(); }
 function nextLevel() { loadLevel(level + 1); }
