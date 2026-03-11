@@ -8,18 +8,27 @@ let rewardedLevels = JSON.parse(localStorage.getItem('mk_rewarded')) || [];
 let ownedSkins = JSON.parse(localStorage.getItem('mk_skins')) || ['default'];
 let currentSkin = localStorage.getItem('mk_currentSkin') || 'default';
 
+// Elenco skin disponibili
+const availableSkins = [
+    { id: 'default', name: 'Legno', cost: 0 },
+    { id: 'neon', name: 'Neon City', cost: 500 },
+    { id: 'gold', name: 'Oro Puro', cost: 1500 },
+    { id: 'lava', name: 'Magma', cost: 2500 },
+    { id: 'aqua', name: 'Oceano', cost: 3000 }
+];
+
 window.onload = () => {
     applySkin(currentSkin);
     updateUI();
     loadLevel(level);
+    setupSkinShop(); // Inizializza lo shop all'avvio
 };
 
-// --- MOTORE DI GENERAZIONE CON VERIFICA RISOLVIBILITÀ ---
+// --- GENERATORE E RISOLUTORE (Garantisce che il livello sia fattibile) ---
 function generateHardLevel(num) {
     let solved = false;
     let attempts = 0;
     let seed = num * 1234.5;
-    
     const rng = () => {
         seed = Math.sin(seed) * 10000;
         return seed - Math.floor(seed);
@@ -28,7 +37,6 @@ function generateHardLevel(num) {
     while (!solved && attempts < 50) {
         attempts++;
         blocks = [{ x: 0, y: 2, l: 2, o: 'h', k: true }];
-        // Difficoltà: aumenta il numero di blocchi man mano che sali
         let targetCount = 8 + Math.min(Math.floor(num / 4), 7);
         
         for (let i = 0; i < 200 && blocks.length < targetCount; i++) {
@@ -36,50 +44,35 @@ function generateHardLevel(num) {
             let o = rng() > 0.5 ? 'h' : 'v';
             let x = Math.floor(rng() * (6 - (o === 'h' ? l : 1)));
             let y = Math.floor(rng() * (6 - (o === 'v' ? l : 1)));
-
-            if (o === 'h' && y === 2) continue; // Mai sulla riga della chiave
-            if (!checkCollision(x, y, l, o, -1)) {
-                blocks.push({ x, y, l, o, k: false });
-            }
+            if (o === 'h' && y === 2) continue; 
+            if (!checkCollision(x, y, l, o, -1)) blocks.push({ x, y, l, o, k: false });
         }
-
-        // Verifica se lo schema è risolvibile (BFS)
-        if (isSolvable(JSON.parse(JSON.stringify(blocks)))) {
-            solved = true;
-        } else {
-            seed += 1; // Cambia leggermente il seed se il livello è impossibile
-        }
+        if (isSolvable(JSON.parse(JSON.stringify(blocks)))) solved = true;
+        else seed += 1;
     }
     initialPos = JSON.parse(JSON.stringify(blocks));
 }
 
-// --- ALGORITMO DI RISOLUZIONE (BFS) ---
 function isSolvable(startBlocks) {
     let queue = [JSON.stringify(startBlocks)];
-    let visited = new Set();
-    visited.add(queue[0]);
+    let visited = new Set([queue[0]]);
     let steps = 0;
-
     while (queue.length > 0 && steps < 1200) {
         steps++;
         let currentBlocks = JSON.parse(queue.shift());
         if (currentBlocks[0].x === 4) return true;
-
         for (let i = 0; i < currentBlocks.length; i++) {
             let b = currentBlocks[i];
-            let directions = b.o === 'h' ? [[1,0], [-1,0]] : [[0,1], [0,-1]];
-            for (let d of directions) {
-                let nextBlocks = JSON.parse(JSON.stringify(currentBlocks));
-                let nb = nextBlocks[i];
+            let dirs = b.o === 'h' ? [[1,0], [-1,0]] : [[0,1], [0,-1]];
+            for (let d of dirs) {
+                let next = JSON.parse(JSON.stringify(currentBlocks));
+                let nb = next[i];
                 while (true) {
                     let nx = nb.x + d[0], ny = nb.y + d[1];
-                    if (canMoveTo(nx, ny, nb.l, nb.o, i, nextBlocks)) {
+                    if (canMoveTo(nx, ny, nb.l, nb.o, i, next)) {
                         nb.x = nx; nb.y = ny;
-                        let state = JSON.stringify(nextBlocks);
-                        if (!visited.has(state)) {
-                            visited.add(state);
-                            queue.push(state);
-                        }
+                        let state = JSON.stringify(next);
+                        if (!visited.has(state)) { visited.add(state); queue.push(state); }
                     } else break;
                 }
             }
@@ -91,44 +84,70 @@ function isSolvable(startBlocks) {
 function canMoveTo(x, y, l, o, idx, currentBlocks) {
     const w = o === 'h' ? l : 1, h = o === 'v' ? l : 1;
     if (x < 0 || x + w > 6 || y < 0 || y + h > 6) return false;
-    for (let i = 0; i < currentBlocks.length; i++) {
-        if (i === idx) continue;
-        let b = currentBlocks[i];
+    return !currentBlocks.some((b, i) => {
+        if (i === idx) return false;
         const bw = b.o === 'h' ? b.l : 1, bh = b.o === 'v' ? b.l : 1;
-        if (x < b.x + bw && x + w > b.x && y < b.y + bh && y + h > b.y) return false;
-    }
-    return true;
+        return x < b.x + bw && x + w > b.x && y < b.y + bh && y + h > b.y;
+    });
 }
 
-// --- GESTIONE MENU E SKIN ---
-function toggleMenu() { 
-    const m = document.getElementById("level-menu"); 
-    const s = document.getElementById('skin-shop');
-    if (s) s.style.display = 'none';
+// --- MENU E NAVIGAZIONE (FIXED) ---
+function toggleMenu() {
+    const m = document.getElementById("level-menu");
+    const s = document.getElementById("skin-shop");
+    const v = document.getElementById("victory-screen");
     
+    if (s) s.style.display = 'none';
+    if (v) v.style.display = 'none';
+
     const isOpening = m.style.display !== "flex";
     m.style.display = isOpening ? "flex" : "none";
     
     if (isOpening) {
-        const g = document.getElementById("level-grid"); 
+        const g = document.getElementById("level-grid");
         g.innerHTML = '';
-        for(let i=1; i<=100; i++) {
+        for (let i = 1; i <= 100; i++) {
             const btn = document.createElement("div");
-            let isLocked = i > unlockedLevel;
-            btn.className = `lvl-btn ${isLocked ? 'locked' : (rewardedLevels.includes(i) ? 'completed' : '')}`;
-            btn.innerHTML = isLocked ? '🔒' : i;
-            if (!isLocked) btn.onclick = () => loadLevel(i);
+            let locked = i > unlockedLevel;
+            btn.className = `lvl-btn ${locked ? 'locked' : (rewardedLevels.includes(i) ? 'completed' : '')}`;
+            btn.innerHTML = locked ? '🔒' : i;
+            if (!locked) btn.onclick = () => loadLevel(i);
             g.appendChild(btn);
         }
     }
+}
+
+function goToLevelsFromVictory() {
+    toggleMenu(); 
+}
+
+// --- SKIN SHOP ---
+function setupSkinShop() {
+    const shopGrid = document.getElementById("skin-grid");
+    if (!shopGrid) return;
+    shopGrid.innerHTML = '';
+    availableSkins.forEach(skin => {
+        const item = document.createElement("div");
+        item.className = "skin-item";
+        item.innerHTML = `
+            <div class="skin-preview ${skin.id}"></div>
+            <span>${skin.name}</span>
+            <button onclick="buySkin('${skin.id}', ${skin.cost})">
+                ${ownedSkins.includes(skin.id) ? 'USA' : skin.cost + ' 💎'}
+            </button>
+        `;
+        shopGrid.appendChild(item);
+    });
 }
 
 function toggleSkinShop() {
     const s = document.getElementById('skin-shop');
     const m = document.getElementById('level-menu');
     if (m) m.style.display = 'none';
+    
     const isOpening = s.style.display !== 'flex';
     s.style.display = isOpening ? 'flex' : 'none';
+    if (isOpening) setupSkinShop();
 }
 
 function buySkin(id, cost) {
@@ -144,7 +163,8 @@ function buySkin(id, cost) {
         localStorage.setItem('mk_skins', JSON.stringify(ownedSkins));
         applySkin(id);
         updateUI();
-        toggleSkinShop();
+        setupSkinShop();
+        alert("Skin sbloccata!");
     } else {
         alert("💎 XP insufficienti!");
     }
@@ -156,7 +176,7 @@ function applySkin(id) {
     localStorage.setItem('mk_currentSkin', id);
 }
 
-// --- CORE GAMEPLAY ---
+// --- GESTIONE GIOCO ---
 function loadLevel(num) {
     level = num;
     localStorage.setItem('mk_level', level);
@@ -245,12 +265,10 @@ function startTimer() {
         document.getElementById("timer").innerText = `${m}:${s}`;
     }, 1000);
 }
-
 function resetTimer() { clearInterval(timerInterval); seconds = 0; document.getElementById("timer").innerText = "00:00"; }
 function updateUI() { 
     document.getElementById("xp").innerText = xp; 
     document.getElementById("level").innerText = level; 
 }
 function resetLevel() { blocks = JSON.parse(JSON.stringify(initialPos)); render(); resetTimer(); startTimer(); }
-function goToLevelsFromVictory() { toggleMenu(); }
 function nextLevel() { loadLevel(level + 1); }
