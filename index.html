@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Master Key</title>
+    <title>Master Key - Pro Edition</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="skin-default">
     <div id="game-ui">
         <div class="header">
             <div class="stat-item">⏳ <span id="timer">00:00</span></div>
@@ -22,7 +22,7 @@
 
         <div class="footer-controls">
             <button class="btn-wood" onclick="resetLevel()">RESET</button>
-            <button id="hint-btn" class="btn-wood hint" onclick="useHint()">HINT (500 XP)</button>
+            <button id="skin-shop-btn" class="btn-wood skin" onclick="toggleSkinShop()">SKIN SHOP</button>
         </div>
     </div>
 
@@ -34,13 +34,25 @@
         </div>
     </div>
 
+    <div id="skin-shop" class="overlay">
+        <div class="modal">
+            <h2>CAMBIA SKIN</h2>
+            <div class="skin-options">
+                <button class="skin-item" onclick="applySkin('default')">Legno (Free)</button>
+                <button class="skin-item" onclick="buySkin('neon', 1000)">Neon Blue (1000 💎)</button>
+                <button class="skin-item" onclick="buySkin('royal', 2500)">Royal Gold (2500 💎)</button>
+            </div>
+            <button class="btn-wood" onclick="toggleSkinShop()">CHIUDI</button>
+        </div>
+    </div>
+
     <div id="victory-screen" class="overlay">
         <div class="modal victory">
-            <h1>LIVELLO CRIPTATO</h1>
+            <h1>COMPLETATO!</h1>
             <p id="victory-xp-msg"></p>
             <div class="victory-btns">
                 <button class="btn-wood" onclick="goToLevelsFromVictory()">LIVELLI</button>
-                <button class="btn-wood gold" onclick="nextLevel()">CONTINUA</button>
+                <button class="btn-wood gold" onclick="nextLevel()">AVANTI</button>
             </div>
         </div>
     </div>
