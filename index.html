@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L'Impostore - One Word Edition</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --accent: #38bdf8;
+            --danger: #f43f5e;
+            --success: #4ade80;
+            --text: #f1f5f9;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .close-link {
+            position: fixed; top: 10px; left: 10px; z-index: 9999; 
+            text-decoration: none; color: rgba(255, 255, 255, 0.2); 
+            font-family: sans-serif; font-size: 24px; padding: 10px; 
+            transition: color 0.3s ease;
+        }
+        .close-link:hover { color: rgba(255, 255, 255, 1); }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+            border: 2px solid #334155;
+        }
+
+        .hidden { display: none !important; }
+
+        h1 { color: var(--accent); margin-top: 0; font-size: 2.2rem; }
+        
+        input, button, select {
+            width: 100%;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 0.8rem;
+            border: none;
+            font-size: 1rem;
+            font-weight: bold;
+            box-sizing: border-box;
+        }
+
+        input, select { background: #0f172a; color: white; border: 1px solid #334155; }
+
+        button { background-color: var(--accent); color: var(--bg); cursor: pointer; transition: 0.2s; }
+        button:hover { opacity: 0.9; transform: scale(1.02); }
+
+        .player-tag {
+            display: inline-block;
+            background: #334155;
+            padding: 6px 12px;
+            margin: 4px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+
+        .role-card {
+            background: #0f172a;
+            padding: 2rem;
+            border: 3px dashed var(--accent);
+            border-radius: 1rem;
+            margin: 1rem 0;
+            cursor: pointer;
+        }
+
+        .result-box {
+            background: rgba(15, 23, 42, 0.8);
+            padding: 2rem;
+            border-radius: 1.2rem;
+            margin: 1.5rem 0;
+        }
+
+        .label { color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 5px; display: block; }
+        .highlight { display: block; font-size: 1.6rem; font-weight: 800; margin-bottom: 15px; }
+        
+        .victory-civili { border-color: var(--success); }
+        .victory-impostore { border-color: var(--danger); }
+    </style>
+</head>
+<body>
+
+<a href="https://mastersabba.github.io/MasterSabba/" target="_self" class="close-link">✕</a>
+
+<div class="container" id="main-box">
+    <div id="screen-setup">
+        <h1>L'Impostore</h1>
+        <div style="display: flex; gap: 8px;">
+            <input type="text" id="p-name" placeholder="Nome giocatore..." autocomplete="off">
+            <button onclick="addP()" style="width: auto;">+</button>
+        </div>
+        <div id="p-list" style="margin-bottom: 15px;"></div>
+        
+        <div id="setup-options" class="hidden">
+            <label class="label">Quanti Impostori?</label>
+            <select id="imp-count"></select>
+            <button onclick="start()" style="background: var(--success); margin-top:10px;">INIZIA PARTITA</button>
+        </div>
+    </div>
+
+    <div id="screen-role" class="hidden">
+        <h2 id="cur-p-name">---</h2>
+        <div class="role-card" onclick="reveal()">
+            <div id="role-text">Clicca per vedere il tuo segreto</div>
+        </div>
+        <button id="btn-next" class="hidden" onclick="next()">PROSSIMO</button>
+    </div>
+
+    <div id="screen-vote" class="hidden">
+        <h2>Votazione</h2>
+        <p id="vote-instruction">Chi è l'impostore?</p>
+        <div id="vote-list"></div>
+    </div>
+
+    <div id="screen-guess" class="hidden">
+        <h2 style="color: var(--danger)">Ultima Chance</h2>
+        <p>Indovina la parola segreta:</p>
+        <input type="text" id="imp-guess" placeholder="Qual era la parola?" autocomplete="off">
+        <button onclick="checkGuess()" style="background: var(--danger); color: white;">CONFERMA</button>
+    </div>
+
+    <div id="screen-end" class="hidden">
+        <h1 id="end-title">---</h1>
+        <div class="result-box">
+            <div class="label">Gli Impostori erano</div>
+            <span id="final-impostor-name" class="highlight" style="color: var(--danger)">---</span>
+            <div class="label">La Parola Segreta era</div>
+            <span id="final-word" class="highlight" style="color: var(--accent)">---</span>
+        </div>
+        <button onclick="location.reload()">RIGIOCA</button>
+    </div>
+</div>
+
+<script>
+    const db = [
+        // CIBO
+        {w: "Pizza", h: "Italia"}, {w: "Sushi", h: "Giappone"}, {w: "Hamburger", h: "Fastfood"}, {w: "Lasagna", h: "Pasta"}, {w: "Gelato", h: "Freddo"}, {w: "Caffè", h: "Energia"}, {w: "Kebab", h: "Carne"}, {w: "Carbonara", h: "Uovo"}, {w: "Tiramisù", h: "Dolce"}, {w: "Popcorn", h: "Cinema"}, {w: "Cioccolato", h: "Cacao"}, {w: "Mela", h: "Frutta"},
+        // ANIMALI
+        {w: "Panda", h: "Bambù"}, {w: "Squalo", h: "Mare"}, {w: "Leone", h: "Savana"}, {w: "Pinguino", h: "Ghiaccio"}, {w: "Elefante", h: "Proboscide"}, {w: "Gatto", h: "Fusa"}, {w: "Giraffa", h: "Collo"}, {w: "Pipistrello", h: "Notte"}, {w: "Zebra", h: "Strisce"}, {w: "Lupo", h: "Branco"}, {w: "Aquila", h: "Cielo"}, {w: "Serpente", h: "Veleno"},
+        // OGGETTI
+        {w: "Smartphone", h: "Tecnologia"}, {w: "Ombrello", h: "Pioggia"}, {w: "Portafoglio", h: "Soldi"}, {w: "Zaino", h: "Spalle"}, {w: "Orologio", h: "Tempo"}, {w: "Chitarra", h: "Musica"}, {w: "Occhiali", h: "Vista"}, {w: "Libro", h: "Lettura"}, {w: "Panchina", h: "Parco"}, {w: "Chiavi", h: "Serratura"}, {w: "Martello", h: "Lavoro"}, {w: "Specchio", h: "Riflesso"},
+        // PERSONAGGI / FANTASY
+        {w: "Harry Potter", h: "Mago"}, {w: "Spiderman", h: "Ragnatela"}, {w: "Batman", h: "Pipistrello"}, {w: "Hulk", h: "Verde"}, {w: "Drago", h: "Fuoco"}, {w: "Zombi", h: "Morto"}, {w: "Sirena", h: "Pesce"}, {w: "Babbo Natale", h: "Regali"}, {w: "Superman", h: "Volo"}, {w: "Ninja", h: "Giappone"}, {w: "Pirata", h: "Tesoro"}, {w: "Vampiro", h: "Sangue"},
+        // LUOGHI
+        {w: "Venezia", h: "Canali"}, {w: "Parigi", h: "Francia"}, {w: "Colosseo", h: "Roma"}, {w: "Aeroporto", h: "Viaggio"}, {w: "Scuola", h: "Studio"}, {w: "Palestra", h: "Muscoli"}, {w: "Biblioteca", h: "Silenzio"}, {w: "Deserto", h: "Sabbia"}, {w: "Montagna", h: "Neve"}, {w: "Luna Park", h: "Giostre"}, {w: "Ospedale", h: "Salute"}, {w: "Prigione", h: "Sbarre"},
+        // NATURA / SCIENZA
+        {w: "Vulcano", h: "Lava"}, {w: "Alieni", h: "Spazio"}, {w: "Bitcoin", h: "Internet"}, {w: "TikTok", h: "Social"}, {w: "Dinosauro", h: "Preistoria"}, {w: "Eclissi", h: "Sole"}, {w: "Sottomarino", h: "Abissi"}, {w: "Tatuaggio", h: "Pelle"}, {w: "Fulmine", h: "Tempesta"}, {w: "Tornado", h: "Vento"}, {w: "Diamante", h: "Raro"}, {w: "Astronauta", h: "Luna"}
+    ];
+
+    // Riempimento rapido altre 100 parole
+    const more = [
+        ["Cactus", "Pianta"], ["Walkman", "Musica"], ["Mappa", "Viaggio"], ["Trono", "Re"], ["Corona", "Oro"], ["Maschera", "Viso"], ["Bussola", "Nord"], ["Ghiacciaio", "Freddo"], ["Faro", "Mare"], ["Castello", "Medioevo"], ["Amaca", "Relax"], ["Scacchi", "Logica"], ["Karaoke", "Voce"], ["Selfie", "Telefono"], ["Marte", "Pianeta"], ["Sinfonia", "Orchestra"], ["Paracadute", "Salto"], ["Candela", "Luce"], ["Mummia", "Egitto"], ["Bolla", "Sapone"], ["Telescopio", "Stelle"], ["Microscopio", "Batteri"], ["Grattacielo", "Città"], ["Stadio", "Calcio"], ["Cinema", "Film"]
+    ];
+    more.forEach(pair => db.push({w: pair[0], h: pair[1]}));
+
+    let ps = [], data = {imps: [], w: "", h: "", cur: 0, caughtImps: []};
+
+    document.getElementById('p-name').addEventListener('keypress', (e) => { if (e.key === 'Enter') addP(); });
+    document.getElementById('imp-guess').addEventListener('keypress', (e) => { if (e.key === 'Enter') checkGuess(); });
+
+    function addP() {
+        const n = document.getElementById('p-name');
+        if (n.value.trim()) {
+            ps.push(n.value.trim());
+            n.value = '';
+            document.getElementById('p-list').innerHTML = ps.map(p => `<span class="player-tag">${p}</span>`).join('');
+            if (ps.length >= 3) {
+                document.getElementById('setup-options').classList.remove('hidden');
+                updateImpSelect();
+            }
+        }
+    }
+
+    function updateImpSelect() {
+        const select = document.getElementById('imp-count');
+        const currentVal = select.value;
+        select.innerHTML = '';
+        for(let i=1; i <= Math.floor(ps.length/2); i++) {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.text = i + (i > 1 ? ' Impostori' : ' Impostore');
+            select.appendChild(opt);
+        }
+        if (currentVal) select.value = currentVal;
+    }
+
+    function start() {
+        const s = db[Math.floor(Math.random() * db.length)];
+        const impNum = parseInt(document.getElementById('imp-count').value) || 1;
+        let indices = Array.from(Array(ps.length).keys()).sort(() => Math.random() - 0.5);
+        data.imps = indices.slice(0, impNum);
+        data.w = s.w; data.h = s.h; data.cur = 0; data.caughtImps = [];
+        show('screen-role'); updateRole();
+    }
+
+    function updateRole() {
+        document.getElementById('cur-p-name').innerText = ps[data.cur];
+        document.getElementById('role-text').innerText = "Clicca per vedere il tuo segreto";
+        document.getElementById('btn-next').classList.add('hidden');
+    }
+
+    function reveal() {
+        const isImp = data.imps.includes(data.cur);
+        document.getElementById('role-text').innerHTML = isImp ? 
+            `<b style="color:var(--danger)">IMPOSTORE</b><br><small>Indizio: ${data.h}</small>` : 
+            `<b style="color:var(--accent)">CIVILE</b><br><small>Parola: ${data.w}</small>`;
+        document.getElementById('btn-next').classList.remove('hidden');
+    }
+
+    function next() {
+        data.cur++;
+        if (data.cur < ps.length) updateRole();
+        else renderVote();
+    }
+
+    function renderVote() {
+        show('screen-vote');
+        document.getElementById('vote-list').innerHTML = ps.map((p, i) => 
+            `<button id="btn-v-${i}" style="background:#334155; color:white; margin:4px 0;" onclick="vote(${i})">${p}</button>`).join('');
+    }
+
+    function vote(i) {
+        if (data.imps.includes(i)) {
+            if (!data.caughtImps.includes(i)) data.caughtImps.push(i);
+            const btn = document.getElementById(`btn-v-${i}`);
+            btn.style.opacity = "0.3"; btn.disabled = true; btn.innerText = ps[i] + " (BECCATO!)";
+            if (data.caughtImps.length === data.imps.length) setTimeout(() => show('screen-guess'), 600);
+        } else finish(true); 
+    }
+
+    function checkGuess() {
+        const g = document.getElementById('imp-guess').value.trim().toLowerCase();
+        finish(g === data.w.toLowerCase());
+    }
+
+    function finish(impVince) {
+        show('screen-end');
+        const box = document.getElementById('main-box');
+        const title = document.getElementById('end-title');
+        box.className = "container " + (impVince ? "victory-impostore" : "victory-civili");
+        title.innerText = impVince ? "Vince l'Impostore!" : "Vincono i Civili!";
+        title.style.color = impVince ? "var(--danger)" : "var(--success)";
+        document.getElementById('final-impostor-name').innerText = data.imps.map(idx => ps[idx]).join(", ");
+        document.getElementById('final-word').innerText = data.w;
+    }
+
+    function show(id) {
+        ['screen-setup', 'screen-role', 'screen-vote', 'screen-guess', 'screen-end'].forEach(s => 
+            document.getElementById(s).classList.add('hidden'));
+        document.getElementById(id).classList.remove('hidden');
+    }
+</script>
+</body>
+</html>
