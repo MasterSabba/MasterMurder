@@ -147,27 +147,21 @@
             <div class="label">La Parola Segreta era</div>
             <span id="final-word" class="highlight" style="color: var(--accent)">---</span>
         </div>
-        <button onclick="location.reload()">RIGIOCA</button>
+        <button onclick="start()" style="background: var(--accent); color: var(--bg);">RIPROVA</button>
+        <button onclick="location.reload()" style="background: transparent; color: #94a3b8; border: 1px solid #334155; margin-top: 10px;">ESCI</button>
     </div>
 </div>
 
 <script>
     const db = [
-        // CIBO
         {w: "Pizza", h: "Italia"}, {w: "Sushi", h: "Giappone"}, {w: "Hamburger", h: "Fastfood"}, {w: "Lasagna", h: "Pasta"}, {w: "Gelato", h: "Freddo"}, {w: "Caffè", h: "Energia"}, {w: "Kebab", h: "Carne"}, {w: "Carbonara", h: "Uovo"}, {w: "Tiramisù", h: "Dolce"}, {w: "Popcorn", h: "Cinema"}, {w: "Cioccolato", h: "Cacao"}, {w: "Mela", h: "Frutta"},
-        // ANIMALI
         {w: "Panda", h: "Bambù"}, {w: "Squalo", h: "Mare"}, {w: "Leone", h: "Savana"}, {w: "Pinguino", h: "Ghiaccio"}, {w: "Elefante", h: "Proboscide"}, {w: "Gatto", h: "Fusa"}, {w: "Giraffa", h: "Collo"}, {w: "Pipistrello", h: "Notte"}, {w: "Zebra", h: "Strisce"}, {w: "Lupo", h: "Branco"}, {w: "Aquila", h: "Cielo"}, {w: "Serpente", h: "Veleno"},
-        // OGGETTI
         {w: "Smartphone", h: "Tecnologia"}, {w: "Ombrello", h: "Pioggia"}, {w: "Portafoglio", h: "Soldi"}, {w: "Zaino", h: "Spalle"}, {w: "Orologio", h: "Tempo"}, {w: "Chitarra", h: "Musica"}, {w: "Occhiali", h: "Vista"}, {w: "Libro", h: "Lettura"}, {w: "Panchina", h: "Parco"}, {w: "Chiavi", h: "Serratura"}, {w: "Martello", h: "Lavoro"}, {w: "Specchio", h: "Riflesso"},
-        // PERSONAGGI / FANTASY
         {w: "Harry Potter", h: "Mago"}, {w: "Spiderman", h: "Ragnatela"}, {w: "Batman", h: "Pipistrello"}, {w: "Hulk", h: "Verde"}, {w: "Drago", h: "Fuoco"}, {w: "Zombi", h: "Morto"}, {w: "Sirena", h: "Pesce"}, {w: "Babbo Natale", h: "Regali"}, {w: "Superman", h: "Volo"}, {w: "Ninja", h: "Giappone"}, {w: "Pirata", h: "Tesoro"}, {w: "Vampiro", h: "Sangue"},
-        // LUOGHI
         {w: "Venezia", h: "Canali"}, {w: "Parigi", h: "Francia"}, {w: "Colosseo", h: "Roma"}, {w: "Aeroporto", h: "Viaggio"}, {w: "Scuola", h: "Studio"}, {w: "Palestra", h: "Muscoli"}, {w: "Biblioteca", h: "Silenzio"}, {w: "Deserto", h: "Sabbia"}, {w: "Montagna", h: "Neve"}, {w: "Luna Park", h: "Giostre"}, {w: "Ospedale", h: "Salute"}, {w: "Prigione", h: "Sbarre"},
-        // NATURA / SCIENZA
         {w: "Vulcano", h: "Lava"}, {w: "Alieni", h: "Spazio"}, {w: "Bitcoin", h: "Internet"}, {w: "TikTok", h: "Social"}, {w: "Dinosauro", h: "Preistoria"}, {w: "Eclissi", h: "Sole"}, {w: "Sottomarino", h: "Abissi"}, {w: "Tatuaggio", h: "Pelle"}, {w: "Fulmine", h: "Tempesta"}, {w: "Tornado", h: "Vento"}, {w: "Diamante", h: "Raro"}, {w: "Astronauta", h: "Luna"}
     ];
 
-    // Riempimento rapido altre 100 parole
     const more = [
         ["Cactus", "Pianta"], ["Walkman", "Musica"], ["Mappa", "Viaggio"], ["Trono", "Re"], ["Corona", "Oro"], ["Maschera", "Viso"], ["Bussola", "Nord"], ["Ghiacciaio", "Freddo"], ["Faro", "Mare"], ["Castello", "Medioevo"], ["Amaca", "Relax"], ["Scacchi", "Logica"], ["Karaoke", "Voce"], ["Selfie", "Telefono"], ["Marte", "Pianeta"], ["Sinfonia", "Orchestra"], ["Paracadute", "Salto"], ["Candela", "Luce"], ["Mummia", "Egitto"], ["Bolla", "Sapone"], ["Telescopio", "Stelle"], ["Microscopio", "Batteri"], ["Grattacielo", "Città"], ["Stadio", "Calcio"], ["Cinema", "Film"]
     ];
@@ -176,7 +170,6 @@
     let ps = [], data = {imps: [], w: "", h: "", cur: 0, caughtImps: []};
 
     document.getElementById('p-name').addEventListener('keypress', (e) => { if (e.key === 'Enter') addP(); });
-    document.getElementById('imp-guess').addEventListener('keypress', (e) => { if (e.key === 'Enter') checkGuess(); });
 
     function addP() {
         const n = document.getElementById('p-name');
@@ -205,6 +198,10 @@
     }
 
     function start() {
+        // Reset contenitore stile
+        document.getElementById('main-box').className = "container";
+        document.getElementById('imp-guess').value = "";
+        
         const s = db[Math.floor(Math.random() * db.length)];
         const impNum = parseInt(document.getElementById('imp-count').value) || 1;
         let indices = Array.from(Array(ps.length).keys()).sort(() => Math.random() - 0.5);
