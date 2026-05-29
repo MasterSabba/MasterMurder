@@ -11,6 +11,6 @@ Il gioco include:
 - Ultima chance per l’impostore di indovinare la parola
 - Interfaccia responsive moderna e minimalista
 
-È collegato alla repository centrale MasterHub (https://mastersabba.github.io/MasterSabba/), piena di altri minigame.
+È collegato alla repository centrale MasterGames (https://mastersabba.github.io/MasterSabba/), piena di altri minigame.
 
 ![Immagine](IMG_9425.jpeg)
