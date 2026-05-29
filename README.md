@@ -4,12 +4,12 @@ MasterMurder è un party game multiplayer locale ispirato a One Word Edition. I 
 
 Il gioco include:
 
-Multiplayer locale da 3+ giocatori
-Supporto per uno o più impostori
-Database casuale di parole e indizi
-Sistema di votazione integrato
-Ultima chance per l’impostore di indovinare la parola
-Interfaccia responsive moderna e minimalista
+- Multiplayer locale da 3+ giocatori
+- Supporto per uno o più impostori
+- Database casuale di parole e indizi
+- Sistema di votazione integrato
+- Ultima chance per l’impostore di indovinare la parola
+- Interfaccia responsive moderna e minimalista
 
 È collegato alla repository centrale MasterHub (https://mastersabba.github.io/MasterSabba/), piena di altri minigame.
 ![Immagine] (IMG_9423.jpeg)
