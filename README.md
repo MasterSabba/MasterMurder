@@ -1,4 +1,4 @@
-#MasterMurder
+# MasterMurder
 
 MasterMurder è un party game multiplayer locale ispirato a One Word Edition. I civili conoscono la parola segreta, mentre gli impostori ricevono solo un indizio e devono mimetizzarsi tra gli altri giocatori.
 
