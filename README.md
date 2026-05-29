@@ -12,4 +12,5 @@ Il gioco include:
 - Interfaccia responsive moderna e minimalista
 
 È collegato alla repository centrale MasterHub (https://mastersabba.github.io/MasterSabba/), piena di altri minigame.
+
 ![Immagine](IMG_9425.jpeg)
