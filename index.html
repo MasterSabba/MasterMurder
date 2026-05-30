@@ -105,6 +105,7 @@
 <div class="container" id="main-box">
     <div id="screen-setup">
         <h1>Master Murder</h1>
+        <div style="margin-bottom: 15px; opacity: 0.8;">Punti: <span id="pts">0</span></div>
         <div style="display: flex; gap: 8px;">
             <input type="text" id="p-name" placeholder="Nome giocatore..." autocomplete="off">
             <button onclick="addP()" style="width: auto;">+</button>
@@ -169,6 +170,11 @@
 
     let ps = [], data = {imps: [], w: "", h: "", cur: 0, caughtImps: []};
 
+    // --- LOGICA PUNTEGGIO HUB ---
+    let score = parseInt(localStorage.getItem('mm_score')) || 0;
+    localStorage.setItem('points_mastermurder', score); // Allinea l'Hub all'avvio
+    document.getElementById('pts').innerText = score;
+
     document.getElementById('p-name').addEventListener('keypress', (e) => { if (e.key === 'Enter') addP(); });
 
     function addP() {
@@ -198,12 +204,13 @@
     }
 
     function start() {
-        // Reset contenitore stile
         document.getElementById('main-box').className = "container";
         document.getElementById('imp-guess').value = "";
         
         const s = db[Math.floor(Math.random() * db.length)];
         const impNum = parseInt(document.getElementById('imp-count').value) || 1;
+        
+        // Mischia gli indici per assegnare i ruoli
         let indices = Array.from(Array(ps.length).keys()).sort(() => Math.random() - 0.5);
         data.imps = indices.slice(0, impNum);
         data.w = s.w; data.h = s.h; data.cur = 0; data.caughtImps = [];
@@ -259,6 +266,21 @@
         title.style.color = impVince ? "var(--danger)" : "var(--success)";
         document.getElementById('final-impostor-name').innerText = data.imps.map(idx => ps[idx]).join(", ");
         document.getElementById('final-word').innerText = data.w;
+
+        // --- ASSEGNAZIONE PUNTI ALL'HUB ---
+        if (ps.length > 0) {
+            // Il Giocatore 1 (indice 0) è il proprietario del dispositivo
+            const ownerIsImp = data.imps.includes(0);
+            const ownerWon = (impVince && ownerIsImp) || (!impVince && !ownerIsImp);
+            
+            if (ownerWon) {
+                score += 10;
+                localStorage.setItem('mm_score', score);
+                localStorage.setItem('points_mastermurder', score); // Sincronizza con l'Hub
+                document.getElementById('pts').innerText = score;
+                title.innerText += " (+10 💎)";
+            }
+        }
     }
 
     function show(id) {
