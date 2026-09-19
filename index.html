@@ -172,7 +172,7 @@
 
     // --- LOGICA PUNTEGGIO HUB ---
     let score = parseInt(localStorage.getItem('mm_score')) || 0;
-    localStorage.setItem('points_mastermurder', score); // Allinea l'Hub all'avvio
+    localStorage.setItem('points_mastermurder', score); 
     document.getElementById('pts').innerText = score;
 
     document.getElementById('p-name').addEventListener('keypress', (e) => { if (e.key === 'Enter') addP(); });
@@ -210,7 +210,6 @@
         const s = db[Math.floor(Math.random() * db.length)];
         const impNum = parseInt(document.getElementById('imp-count').value) || 1;
         
-        // Mischia gli indici per assegnare i ruoli
         let indices = Array.from(Array(ps.length).keys()).sort(() => Math.random() - 0.5);
         data.imps = indices.slice(0, impNum);
         data.w = s.w; data.h = s.h; data.cur = 0; data.caughtImps = [];
@@ -267,18 +266,26 @@
         document.getElementById('final-impostor-name').innerText = data.imps.map(idx => ps[idx]).join(", ");
         document.getElementById('final-word').innerText = data.w;
 
-        // --- ASSEGNAZIONE PUNTI ALL'HUB ---
+        // --- ASSEGNAZIONE PUNTI E SINCRONIZZAZIONE HUB ---
         if (ps.length > 0) {
-            // Il Giocatore 1 (indice 0) è il proprietario del dispositivo
             const ownerIsImp = data.imps.includes(0);
             const ownerWon = (impVince && ownerIsImp) || (!impVince && !ownerIsImp);
             
             if (ownerWon) {
                 score += 10;
                 localStorage.setItem('mm_score', score);
-                localStorage.setItem('points_mastermurder', score); // Sincronizza con l'Hub
+                localStorage.setItem('points_mastermurder', score); 
                 document.getElementById('pts').innerText = score;
                 title.innerText += " (+10 💎)";
+
+                // Invio postMessage all'Hub genitore
+                const scoreMsg = {
+                    type: 'SCORE_UPDATE',
+                    gameKey: 'master-murder',
+                    points: score
+                };
+                if (window.opener) window.opener.postMessage(scoreMsg, '*');
+                if (window.parent && window.parent !== window) window.parent.postMessage(scoreMsg, '*');
             }
         }
     }
