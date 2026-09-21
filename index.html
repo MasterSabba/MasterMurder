@@ -96,11 +96,19 @@
         
         .victory-civili { border-color: var(--success); }
         .victory-impostore { border-color: var(--danger); }
+
+             .exit-button {
+            position: absolute; top: 15px; left: 20px; font-size: 2rem; line-height: 1;
+            color: var(--empty-border); text-decoration: none; z-index: 100;
+            transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; font-family: Arial, sans-serif;
+        }
+        .exit-button:hover { color: var(--text-color); transform: scale(1.1); }
     </style>
 </head>
 <body>
 
-<a href="https://mastersabba.github.io/MasterSabba/" target="_self" class="close-link">✕</a>
+    <a href="#" onclick="window.close(); return false;" class="exit-button" title="Torna all'Hub">×</a>
+
 
 <div class="container" id="main-box">
     <div id="screen-setup">
