@@ -1,308 +1,1047 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="it" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MasterMurder - One Word Edition</title>
+    <title>MasterMurder & Undercover</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        dark: {
+                            900: '#0a0a0c',
+                            800: '#121216',
+                            700: '#1c1c24',
+                            600: '#272732',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --bg: #0f172a;
-            --card-bg: #1e293b;
-            --accent: #38bdf8;
-            --danger: #f43f5e;
-            --success: #4ade80;
-            --text: #f1f5f9;
-        }
-
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            touch-action: none
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0a0a0c;
+            color: #f8fafc;
         }
-
-        .close-link {
-            position: fixed; top: 10px; left: 10px; z-index: 9999; 
-            text-decoration: none; color: rgba(255, 255, 255, 0.2); 
-            font-family: sans-serif; font-size: 24px; padding: 10px; 
-            transition: color 0.3s ease;
+        .minimal-card {
+            background: rgba(28, 28, 36, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
-        .close-link:hover { color: rgba(255, 255, 255, 1); }
-
-        .container {
-            background-color: var(--card-bg);
-            padding: 2.5rem;
-            border-radius: 1.5rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            max-width: 450px;
-            width: 100%;
-            text-align: center;
-            border: 2px solid #334155;
+        .card-flip {
+            perspective: 1200px;
         }
-
-        .hidden { display: none !important; }
-
-        h1 { color: var(--accent); margin-top: 0; font-size: 2.2rem; }
-        
-        input, button, select {
-            width: 100%;
-            padding: 1rem;
-            margin: 0.5rem 0;
-            border-radius: 0.8rem;
-            border: none;
-            font-size: 1rem;
-            font-weight: bold;
-            box-sizing: border-box;
+        .card-inner {
+            transition: transform 0.5s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transform-style: preserve-3d;
         }
-
-        input, select { background: #0f172a; color: white; border: 1px solid #334155; }
-
-        button { background-color: var(--accent); color: var(--bg); cursor: pointer; transition: 0.2s; }
-        button:hover { opacity: 0.9; transform: scale(1.02); }
-
-        .player-tag {
-            display: inline-block;
-            background: #334155;
-            padding: 6px 12px;
-            margin: 4px;
-            border-radius: 20px;
-            font-size: 0.85rem;
+        .card-inner.flipped {
+            transform: rotateY(180deg);
         }
-
-        .role-card {
-            background: #0f172a;
-            padding: 2rem;
-            border: 3px dashed var(--accent);
-            border-radius: 1rem;
-            margin: 1rem 0;
-            cursor: pointer;
+        .card-front, .card-back {
+            backface-visibility: hidden;
         }
-
-        .result-box {
-            background: rgba(15, 23, 42, 0.8);
-            padding: 2rem;
-            border-radius: 1.2rem;
-            margin: 1.5rem 0;
+        .card-back {
+            transform: rotateY(180deg);
         }
-
-        .label { color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 5px; display: block; }
-        .highlight { display: block; font-size: 1.6rem; font-weight: 800; margin-bottom: 15px; }
-        
-        .victory-civili { border-color: var(--success); }
-        .victory-impostore { border-color: var(--danger); }
-
-             .exit-button {
-            position: absolute; top: 15px; left: 20px; font-size: 2rem; line-height: 1;
-            color: var(--empty-border); text-decoration: none; z-index: 100;
-            transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; font-family: Arial, sans-serif;
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
         }
-        .exit-button:hover { color: var(--text-color); transform: scale(1.1); }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
     </style>
 </head>
-<body>
+<body class="h-full flex flex-col selection:bg-purple-500 selection:text-white overflow-x-hidden">
 
-    <a href="#" onclick="window.close(); return false;" class="exit-button" title="Torna all'Hub">×</a>
+    <a href="#" onclick="window.close(); return false;" class="fixed top-3 left-4 z-50 text-slate-400 hover:text-white text-2xl font-bold transition-all" title="Esci">&times;</a>
 
-
-<div class="container" id="main-box">
-    <div id="screen-setup">
-        <h1>Master Murder</h1>
-        <div style="margin-bottom: 15px; opacity: 0.8;">Punti: <span id="pts">0</span></div>
-        <div style="display: flex; gap: 8px;">
-            <input type="text" id="p-name" placeholder="Nome giocatore..." autocomplete="off">
-            <button onclick="addP()" style="width: auto;">+</button>
+    <header class="w-full py-4 px-6 border-b border-white/5 flex justify-between items-center sticky top-0 z-40 bg-[#0a0a0c]/80 backdrop-blur-md">
+        <div class="flex items-center space-x-3 cursor-pointer pl-6 sm:pl-0" onclick="goToScreen('screen-mode')">
+            <div class="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+                <i class="fa-solid fa-masks-theater text-purple-400 text-sm"></i>
+            </div>
+            <div>
+                <h1 id="header-title" class="font-bold text-sm tracking-widest uppercase text-white">Master Murder</h1>
+            </div>
         </div>
-        <div id="p-list" style="margin-bottom: 15px;"></div>
+        <div class="flex items-center space-x-3">
+            <div id="room-badge" class="hidden px-3 py-1 bg-purple-500/10 border border-purple-500/20 rounded-xl text-xs font-semibold text-purple-300">
+                Stanza: <span id="room-code-display">-</span>
+            </div>
+            <button onclick="openRulesModal()" class="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-slate-300 transition-all">
+                <i class="fa-solid fa-question text-xs"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center items-center relative">
+
+        <!-- 0. SELETTORE MODALITÀ -->
+        <div id="screen-mode" class="w-full space-y-6">
+            <div class="text-center space-y-1.5">
+                <h2 class="text-2xl sm:text-3xl font-bold tracking-tight">Scegli la Modalità</h2>
+                <p class="text-slate-400 text-sm">Come vuoi giocare?</p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4">
+                <button onclick="selectGameMode('impostore')" class="minimal-card p-5 rounded-2xl text-left hover:border-purple-500/50 transition-all group flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 text-lg group-hover:scale-105 transition-transform">
+                        <i class="fa-solid fa-user-secret"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-white text-base">L'Impostore</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Civili con parola comune / L'impostore riceve solo un indizio.</p>
+                    </div>
+                </button>
+
+                <button onclick="selectGameMode('undercover')" class="minimal-card p-5 rounded-2xl text-left hover:border-indigo-500/50 transition-all group flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 text-lg group-hover:scale-105 transition-transform">
+                        <i class="fa-solid fa-eye-slash"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-white text-base">Undercover</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Tutti ricevono una parola segreta, nessuno sa chi sia l'impostore.</p>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <!-- 1. SCELTA TIPO DI GIOCO -->
+        <div id="screen-setup-type" class="w-full space-y-6 hidden">
+            <div class="text-center space-y-1.5">
+                <h2 id="setup-type-title" class="text-2xl font-bold tracking-tight">Tipo di Partita</h2>
+                <p class="text-slate-400 text-sm">Giocare insieme sullo stesso schermo o su più dispositivi?</p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4">
+                <button onclick="initLocalGameSetup()" class="minimal-card p-5 rounded-2xl text-left hover:border-purple-500/50 transition-all group flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-lg">
+                        <i class="fa-solid fa-mobile-screen-button"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-white text-base">Stesso Dispositivo (Pass & Play)</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Inserite i nomi qui e passatevi il telefono a turno.</p>
+                    </div>
+                </button>
+
+                <button onclick="initOnlineGameSetup()" class="minimal-card p-5 rounded-2xl text-left hover:border-indigo-500/50 transition-all group flex items-center space-x-4">
+                    <div class="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 text-lg">
+                        <i class="fa-solid fa-wifi"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-white text-base">Più Dispositivi (Online)</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Crea una stanza e fai unire gli amici con il codice.</p>
+                    </div>
+                </button>
+            </div>
+
+            <button onclick="goToScreen('screen-mode')" class="w-full py-3 bg-white/5 hover:bg-white/10 text-slate-300 font-semibold text-xs rounded-xl transition-all">
+                Indietro
+            </button>
+        </div>
+
+        <!-- 1A. SETUP STESSO DISPOSITIVO -->
+        <div id="screen-setup-local" class="w-full space-y-6 hidden">
+            <div class="text-center space-y-1.5">
+                <h2 class="text-2xl font-bold tracking-tight">Giocatori Locali</h2>
+                <p class="text-slate-400 text-sm">Aggiungi i partecipanti che sono qui con te.</p>
+            </div>
+
+            <div class="minimal-card p-5 rounded-2xl space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs uppercase tracking-wider font-semibold text-slate-400">Partecipanti (<span id="local-player-count">0</span>)</span>
+                    <span class="text-[11px] text-slate-500">Min. 3 giocatori</span>
+                </div>
+
+                <div class="flex space-x-2">
+                    <input type="text" id="local-player-input" placeholder="Nome giocatore..." maxlength="12"
+                        class="flex-1 bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-500 text-white placeholder-slate-600">
+                    <button onclick="addLocalPlayer()" class="bg-white hover:bg-slate-200 text-dark-900 px-5 py-3 rounded-xl font-semibold text-sm transition-all">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+
+                <div id="local-players-list" class="flex flex-wrap gap-2 max-h-36 overflow-y-auto pr-1"></div>
+
+                <div class="pt-2 border-t border-white/5 flex justify-between items-center">
+                    <div>
+                        <div class="text-xs font-medium">Impostori</div>
+                        <div class="text-[10px] text-slate-500">Numero di infiltrati</div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <button onclick="adjustLocalImpostors(-1)" class="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs">-</button>
+                        <span id="local-setting-impostors" class="font-bold w-4 text-center text-xs">1</span>
+                        <button onclick="adjustLocalImpostors(1)" class="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs">+</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex space-x-2">
+                <button onclick="goToScreen('screen-setup-type')" class="px-5 py-3 bg-white/5 hover:bg-white/10 text-slate-300 font-semibold text-xs rounded-xl transition-all">
+                    Indietro
+                </button>
+                <button onclick="startLocalMatch()" class="flex-1 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-purple-600/20 transition-all">
+                    Inizia Partita
+                </button>
+            </div>
+        </div>
+
+        <!-- 1B. SETUP ONLINE -->
+        <div id="screen-setup-online" class="w-full space-y-6 hidden">
+            <div class="text-center space-y-1.5">
+                <h2 class="text-2xl font-bold tracking-tight">Stanza Online</h2>
+                <p class="text-slate-400 text-sm">Crea una nuova stanza o unisciti con il codice.</p>
+            </div>
+
+            <div class="space-y-4">
+                <div class="minimal-card p-5 rounded-2xl space-y-4">
+                    <div class="space-y-2">
+                        <label class="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Il tuo Nome</label>
+                        <input type="text" id="my-name-input" placeholder="Es. Mario" maxlength="12"
+                            class="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-500 text-white placeholder-slate-600">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 pt-2">
+                        <button onclick="createRoom()" class="py-3 bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-purple-600/20 transition-all">
+                            Crea Stanza
+                        </button>
+                        <button onclick="openJoinModal()" class="py-3 bg-white/10 hover:bg-white/15 text-white font-semibold text-xs rounded-xl transition-all">
+                            Unisciti
+                        </button>
+                    </div>
+                </div>
+
+                <div id="room-lobby-box" class="minimal-card p-5 rounded-2xl space-y-4 hidden">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs uppercase tracking-wider font-semibold text-slate-400">Giocatori (<span id="online-player-count">0</span>)</span>
+                        <span class="text-[11px] text-purple-400 font-mono" id="lobby-room-code"></span>
+                    </div>
+
+                    <div id="online-players-list" class="flex flex-wrap gap-2 max-h-36 overflow-y-auto pr-1"></div>
+
+                    <div id="host-controls" class="pt-2 border-t border-white/5 flex justify-between items-center">
+                        <div>
+                            <div class="text-xs font-medium">Impostori</div>
+                            <div class="text-[10px] text-slate-500">Infiltrati</div>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <button onclick="adjustOnlineImpostors(-1)" class="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs">-</button>
+                            <span id="online-setting-impostors" class="font-bold w-4 text-center text-xs">1</span>
+                            <button onclick="adjustOnlineImpostors(1)" class="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs">+</button>
+                        </div>
+                    </div>
+
+                    <button id="start-game-btn" onclick="startOnlineMatch()" class="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-purple-600/20 transition-all hidden">
+                        Avvia Partita per Tutti
+                    </button>
+                    <div id="waiting-host-msg" class="text-center text-xs text-slate-400 py-2 hidden">
+                        In attesa che il creatore avvii la partita...
+                    </div>
+                </div>
+
+                <button onclick="goToScreen('screen-setup-type')" class="w-full py-3 bg-white/5 hover:bg-white/10 text-slate-300 font-semibold text-xs rounded-xl transition-all">
+                    Indietro
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. ROLE REVEAL SCREEN (SCRITTE GRANDI E COLORATE VERDI/ROSSE) -->
+        <div id="screen-reveal" class="w-full max-w-sm hidden flex flex-col items-center space-y-6">
+            <div class="text-center space-y-1">
+                <span id="reveal-turn-subtitle" class="text-[11px] tracking-widest uppercase font-semibold text-purple-400">Passa il dispositivo</span>
+                <h2 id="reveal-player-title" class="text-3xl font-black pt-1">Giocatore</h2>
+                <p class="text-slate-300 text-sm">Tocca la scheda per scoprire il tuo ruolo.</p>
+            </div>
+
+            <div class="w-full h-80 card-flip cursor-pointer" onclick="toggleCardFlip()">
+                <div id="card-inner" class="card-inner w-full h-full relative rounded-3xl shadow-2xl">
+                    <!-- Front -->
+                    <div class="card-front absolute inset-0 minimal-card rounded-3xl p-6 flex flex-col items-center justify-center space-y-4 border border-white/10">
+                        <div class="w-20 h-20 rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+                            <i class="fa-solid fa-fingerprint text-3xl"></i>
+                        </div>
+                        <div class="text-center">
+                            <h3 id="card-player-label" class="font-bold text-xl text-white">Tocca per girare</h3>
+                            <p class="text-sm text-slate-300 mt-1">Scopri la tua parola in segreto</p>
+                        </div>
+                    </div>
+                    <!-- Back -->
+                    <div class="card-back absolute inset-0 minimal-card rounded-3xl p-6 flex flex-col items-center justify-center space-y-5 border border-white/20 bg-gradient-to-b from-dark-800 to-dark-900">
+                        <span id="reveal-card-label" class="text-sm tracking-widest uppercase font-extrabold px-4 py-1.5 rounded-full shadow-md">Segreto</span>
+                        <div id="secret-word-display" class="text-4xl font-black tracking-wide text-center px-4 py-5 bg-white/10 border border-white/20 rounded-2xl w-full shadow-inner text-white">
+                            -
+                        </div>
+                        <button onclick="event.stopPropagation(); finishRevealStep();" class="mt-2 w-full py-3.5 bg-white text-dark-900 hover:bg-slate-200 text-sm font-extrabold rounded-xl transition-all shadow-lg">
+                            Ho visto la parola <i class="fa-solid fa-check ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. DISCUSSION SCREEN -->
+        <div id="screen-discussion" class="w-full max-w-md hidden flex flex-col items-center space-y-6">
+            <div class="text-center space-y-1">
+                <span class="text-[11px] tracking-widest uppercase font-semibold text-indigo-400">Discussione</span>
+                <h2 class="text-2xl font-bold">Parlate a Turno</h2>
+                <p class="text-slate-400 text-xs">Ciascuno dice una parola collegata. Smascherate l'impostore.</p>
+            </div>
+
+            <div class="minimal-card w-full p-8 rounded-3xl flex flex-col items-center space-y-6">
+                <div class="w-32 h-32 rounded-full border border-white/10 flex items-center justify-center bg-dark-900/50">
+                    <div id="timer-display" class="text-3xl font-bold tracking-tight text-white">02:00</div>
+                </div>
+
+                <div class="flex items-center space-x-3 w-full">
+                    <button onclick="toggleTimer()" id="timer-toggle-btn" class="flex-1 py-3 bg-white/10 hover:bg-white/15 text-white font-semibold text-xs rounded-xl transition-all flex items-center justify-center space-x-2">
+                        <i id="timer-icon" class="fa-solid fa-play text-purple-400"></i>
+                        <span id="timer-btn-text">Avvia Timer</span>
+                    </button>
+                    <button onclick="resetTimer()" class="px-4 py-3 bg-white/5 hover:bg-white/10 text-white text-xs rounded-xl transition-all">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                </div>
+
+                <button onclick="goToVotingPhase()" class="w-full py-3.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-rose-600/20 transition-all flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-gavel text-xs"></i>
+                    <span>Procedi al Voto</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 4. VOTING SCREEN -->
+        <div id="screen-voting" class="w-full max-w-md hidden flex flex-col items-center space-y-6">
+            <div class="text-center space-y-1">
+                <span id="voting-subtitle" class="text-[11px] tracking-widest uppercase font-semibold text-rose-400">Votazione Segreta</span>
+                <h2 id="voting-title" class="text-2xl font-bold">Chi voti?</h2>
+                <p id="voting-desc" class="text-slate-400 text-xs">Scegli chi sospetti di più</p>
+            </div>
+
+            <div class="minimal-card w-full p-5 rounded-3xl space-y-4">
+                <div id="voting-candidates-grid" class="grid grid-cols-2 gap-2.5 max-h-56 overflow-y-auto pr-1"></div>
+            </div>
+        </div>
+
+        <!-- 5. RESULTS SCREEN -->
+        <div id="screen-results" class="w-full max-w-md hidden flex flex-col items-center space-y-5 pb-8">
+            <div class="text-center space-y-2">
+                <div id="winner-badge" class="inline-flex items-center space-x-2 px-4 py-2 rounded-full text-xs font-extrabold uppercase tracking-wider shadow-md">
+                    <i class="fa-solid fa-trophy text-xs"></i>
+                    <span id="winner-text">Risultato Partita</span>
+                </div>
+            </div>
+
+            <!-- Card Dettagli Segreti -->
+            <div class="minimal-card w-full p-4 rounded-2xl space-y-3">
+                <div class="text-[11px] uppercase tracking-wider font-bold text-slate-400 flex items-center space-x-2">
+                    <i class="fa-solid fa-key text-purple-400"></i>
+                    <span>Soluzione della Partita</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-dark-900/90 p-3.5 rounded-xl border border-white/5">
+                        <div class="text-[10px] text-emerald-400 uppercase font-semibold tracking-wider">Parola Comune</div>
+                        <div id="result-civil-word" class="text-base font-extrabold text-white mt-1">-</div>
+                    </div>
+                    <div class="bg-dark-900/90 p-3.5 rounded-xl border border-white/5">
+                        <div class="text-[10px] text-rose-400 uppercase font-semibold tracking-wider">Impostore/i</div>
+                        <div id="final-impostors-display" class="text-base font-extrabold text-rose-300 mt-1">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabella Dettaglio Voti -->
+            <div class="minimal-card w-full p-4 rounded-2xl space-y-3">
+                <div class="flex items-center space-x-2 text-xs uppercase tracking-wider font-semibold text-slate-300">
+                    <i class="fa-solid fa-list-check text-purple-400"></i>
+                    <span>Riepilogo Voti Espressi</span>
+                </div>
+                <div id="votes-breakdown-list" class="space-y-2 max-h-44 overflow-y-auto pr-1"></div>
+            </div>
+
+            <div class="flex space-x-2 w-full pt-1">
+                <button onclick="restartGame()" class="flex-1 py-3.5 bg-white text-dark-900 hover:bg-slate-200 font-bold text-xs rounded-xl transition-all shadow-lg">
+                    Gioca Ancora
+                </button>
+                <button onclick="goToScreen('screen-mode')" class="px-5 py-3.5 bg-white/5 hover:bg-white/10 text-slate-300 font-semibold text-xs rounded-xl transition-all">
+                    Menu Principale
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- JOIN MODAL -->
+    <div id="modal-join" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="minimal-card max-w-sm w-full p-6 rounded-3xl space-y-4 border border-white/10">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-base">Unisciti a Stanza</h3>
+                <button onclick="closeJoinModal()" class="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 text-xs">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Codice Stanza</label>
+                    <input type="text" id="join-code-input" placeholder="Es. A4B2" maxlength="6"
+                        class="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-500 uppercase font-mono text-white mt-1">
+                </div>
+                <button onclick="joinRoom()" class="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl">Entra</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- RULES MODAL -->
+    <div id="modal-rules" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="minimal-card max-w-sm w-full p-6 rounded-3xl space-y-4 border border-white/10">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-base">Regole del Gioco</h3>
+                <button onclick="closeRulesModal()" class="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 text-xs">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="space-y-2.5 text-xs text-slate-300 leading-relaxed">
+                <p><strong>L'Impostore:</strong> I civili hanno la stessa parola, l'impostore riceve solo un indizio collegato.</p>
+                <p><strong>Undercover:</strong> Tutti ricevono una parola segreta unica, l'impostore non sa chi è.</p>
+            </div>
+            <button onclick="closeRulesModal()" class="w-full py-2.5 bg-white text-dark-900 hover:bg-slate-200 font-bold text-xs rounded-xl">Ho capito</button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBxZQF5OO5-znaipaPYeFcjOARjFXO1_gc",
+  authDomain: "mastersabba-games.firebaseapp.com",
+  databaseURL: "https://mastersabba-games-default-rtdb.firebaseio.com",
+  projectId: "mastersabba-games",
+  storageBucket: "mastersabba-games.firebasestorage.app",
+  messagingSenderId: "254141019232",
+  appId: "1:254141019232:web:29702c03b91f8a76677f05",
+  measurementId: "G-775DFWZ6PC"
+        };
         
-        <div id="setup-options" class="hidden">
-            <label class="label">Quanti Impostori?</label>
-            <select id="imp-count"></select>
-            <button onclick="start()" style="background: var(--success); margin-top:10px;">INIZIA PARTITA</button>
-        </div>
-    </div>
-
-    <div id="screen-role" class="hidden">
-        <h2 id="cur-p-name">---</h2>
-        <div class="role-card" onclick="reveal()">
-            <div id="role-text">Clicca per vedere il tuo segreto</div>
-        </div>
-        <button id="btn-next" class="hidden" onclick="next()">PROSSIMO</button>
-    </div>
-
-    <div id="screen-vote" class="hidden">
-        <h2>Votazione</h2>
-        <p id="vote-instruction">Chi è l'impostore?</p>
-        <div id="vote-list"></div>
-    </div>
-
-    <div id="screen-guess" class="hidden">
-        <h2 style="color: var(--danger)">Ultima Chance</h2>
-        <p>Indovina la parola segreta:</p>
-        <input type="text" id="imp-guess" placeholder="Qual era la parola?" autocomplete="off">
-        <button onclick="checkGuess()" style="background: var(--danger); color: white;">CONFERMA</button>
-    </div>
-
-    <div id="screen-end" class="hidden">
-        <h1 id="end-title">---</h1>
-        <div class="result-box">
-            <div class="label">Gli Impostori erano</div>
-            <span id="final-impostor-name" class="highlight" style="color: var(--danger)">---</span>
-            <div class="label">La Parola Segreta era</div>
-            <span id="final-word" class="highlight" style="color: var(--accent)">---</span>
-        </div>
-        <button onclick="start()" style="background: var(--accent); color: var(--bg);">RIPROVA</button>
-        <button onclick="location.reload()" style="background: transparent; color: #94a3b8; border: 1px solid #334155; margin-top: 10px;">ESCI</button>
-    </div>
-</div>
-
-<script>
-    const db = [
-        {w: "Pizza", h: "Italia"}, {w: "Sushi", h: "Giappone"}, {w: "Hamburger", h: "Fastfood"}, {w: "Lasagna", h: "Pasta"}, {w: "Gelato", h: "Freddo"}, {w: "Caffè", h: "Energia"}, {w: "Kebab", h: "Carne"}, {w: "Carbonara", h: "Uovo"}, {w: "Tiramisù", h: "Dolce"}, {w: "Popcorn", h: "Cinema"}, {w: "Cioccolato", h: "Cacao"}, {w: "Mela", h: "Frutta"},
-        {w: "Panda", h: "Bambù"}, {w: "Squalo", h: "Mare"}, {w: "Leone", h: "Savana"}, {w: "Pinguino", h: "Ghiaccio"}, {w: "Elefante", h: "Proboscide"}, {w: "Gatto", h: "Fusa"}, {w: "Giraffa", h: "Collo"}, {w: "Pipistrello", h: "Notte"}, {w: "Zebra", h: "Strisce"}, {w: "Lupo", h: "Branco"}, {w: "Aquila", h: "Cielo"}, {w: "Serpente", h: "Veleno"},
-        {w: "Smartphone", h: "Tecnologia"}, {w: "Ombrello", h: "Pioggia"}, {w: "Portafoglio", h: "Soldi"}, {w: "Zaino", h: "Spalle"}, {w: "Orologio", h: "Tempo"}, {w: "Chitarra", h: "Musica"}, {w: "Occhiali", h: "Vista"}, {w: "Libro", h: "Lettura"}, {w: "Panchina", h: "Parco"}, {w: "Chiavi", h: "Serratura"}, {w: "Martello", h: "Lavoro"}, {w: "Specchio", h: "Riflesso"},
-        {w: "Harry Potter", h: "Mago"}, {w: "Spiderman", h: "Ragnatela"}, {w: "Batman", h: "Pipistrello"}, {w: "Hulk", h: "Verde"}, {w: "Drago", h: "Fuoco"}, {w: "Zombi", h: "Morto"}, {w: "Sirena", h: "Pesce"}, {w: "Babbo Natale", h: "Regali"}, {w: "Superman", h: "Volo"}, {w: "Ninja", h: "Giappone"}, {w: "Pirata", h: "Tesoro"}, {w: "Vampiro", h: "Sangue"},
-        {w: "Venezia", h: "Canali"}, {w: "Parigi", h: "Francia"}, {w: "Colosseo", h: "Roma"}, {w: "Aeroporto", h: "Viaggio"}, {w: "Scuola", h: "Studio"}, {w: "Palestra", h: "Muscoli"}, {w: "Biblioteca", h: "Silenzio"}, {w: "Deserto", h: "Sabbia"}, {w: "Montagna", h: "Neve"}, {w: "Luna Park", h: "Giostre"}, {w: "Ospedale", h: "Salute"}, {w: "Prigione", h: "Sbarre"},
-        {w: "Vulcano", h: "Lava"}, {w: "Alieni", h: "Spazio"}, {w: "Bitcoin", h: "Internet"}, {w: "TikTok", h: "Social"}, {w: "Dinosauro", h: "Preistoria"}, {w: "Eclissi", h: "Sole"}, {w: "Sottomarino", h: "Abissi"}, {w: "Tatuaggio", h: "Pelle"}, {w: "Fulmine", h: "Tempesta"}, {w: "Tornado", h: "Vento"}, {w: "Diamante", h: "Raro"}, {w: "Astronauta", h: "Luna"}
-    ];
-
-    const more = [
-        ["Cactus", "Pianta"], ["Walkman", "Musica"], ["Mappa", "Viaggio"], ["Trono", "Re"], ["Corona", "Oro"], ["Maschera", "Viso"], ["Bussola", "Nord"], ["Ghiacciaio", "Freddo"], ["Faro", "Mare"], ["Castello", "Medioevo"], ["Amaca", "Relax"], ["Scacchi", "Logica"], ["Karaoke", "Voce"], ["Selfie", "Telefono"], ["Marte", "Pianeta"], ["Sinfonia", "Orchestra"], ["Paracadute", "Salto"], ["Candela", "Luce"], ["Mummia", "Egitto"], ["Bolla", "Sapone"], ["Telescopio", "Stelle"], ["Microscopio", "Batteri"], ["Grattacielo", "Città"], ["Stadio", "Calcio"], ["Cinema", "Film"]
-    ];
-    more.forEach(pair => db.push({w: pair[0], h: pair[1]}));
-
-    let ps = [], data = {imps: [], w: "", h: "", cur: 0, caughtImps: []};
-
-    // --- LOGICA PUNTEGGIO HUB ---
-    let score = parseInt(localStorage.getItem('mm_score')) || 0;
-    localStorage.setItem('points_mastermurder', score); 
-    document.getElementById('pts').innerText = score;
-
-    document.getElementById('p-name').addEventListener('keypress', (e) => { if (e.key === 'Enter') addP(); });
-
-    function addP() {
-        const n = document.getElementById('p-name');
-        if (n.value.trim()) {
-            ps.push(n.value.trim());
-            n.value = '';
-            document.getElementById('p-list').innerHTML = ps.map(p => `<span class="player-tag">${p}</span>`).join('');
-            if (ps.length >= 3) {
-                document.getElementById('setup-options').classList.remove('hidden');
-                updateImpSelect();
+        let db = null;
+        try {
+            if (!firebase.apps.length) { 
+                firebase.initializeApp(firebaseConfig); 
             }
+            db = firebase.firestore();
+            db.enablePersistence({synchronizeTabs: true}).catch(() => {});
+        } catch(e) { 
+            console.warn("Firestore offline mode fallback"); 
         }
-    }
 
-    function updateImpSelect() {
-        const select = document.getElementById('imp-count');
-        const currentVal = select.value;
-        select.innerHTML = '';
-        for(let i=1; i <= Math.floor(ps.length/2); i++) {
-            const opt = document.createElement('option');
-            opt.value = i;
-            opt.text = i + (i > 1 ? ' Impostori' : ' Impostore');
-            select.appendChild(opt);
+        const wordPairs = [
+            { civil: "Pizza", impostor: "Italia" }, { civil: "Sushi", impostor: "Giappone" }, { civil: "Hamburger", impostor: "Fastfood" },
+            { civil: "Lasagna", impostor: "Pasta" }, { civil: "Gelato", impostor: "Freddo" }, { civil: "Caffè", impostor: "Energia" },
+            { civil: "Kebab", impostor: "Carne" }, { civil: "Carbonara", impostor: "Uovo" }, { civil: "Tiramisù", impostor: "Dolce" },
+            { civil: "Panda", impostor: "Bambù" }, { civil: "Squalo", impostor: "Mare" }, { civil: "Leone", impostor: "Savana" },
+            { civil: "Smartphone", impostor: "Tecnologia" }, { civil: "Ombrello", impostor: "Pioggia" }, { civil: "Orologio", impostor: "Tempo" },
+            { civil: "Harry Potter", impostor: "Mago" }, { civil: "Spiderman", impostor: "Ragnatela" }, { civil: "Batman", impostor: "Pipistrello" },
+            { civil: "Venezia", impostor: "Canali" }, { civil: "Parigi", impostor: "Francia" }, { civil: "Colosseo", impostor: "Roma" }
+        ];
+
+        let gameMode = 'impostore'; 
+        let playType = 'local'; 
+
+        let localPlayers = [];
+        let localImpostorsCount = 1;
+        let localGame = {
+            revealIndex: 0,
+            assignedRoles: [],
+            civilWord: "",
+            impostorWord: "",
+            votingIndex: 0,
+            votes: {}
+        };
+
+        let roomCode = null;
+        let myName = "";
+        let isHost = false;
+        let unsubscribeRoom = null;
+
+        let timerInterval = null, timeLeft = 120, isTimerRunning = false;
+
+        window.onload = function() {
+            const savedName = localStorage.getItem('mm_username');
+            if (savedName) {
+                document.getElementById('my-name-input').value = savedName;
+            }
+            renderLocalPlayersList();
+            setupLocalInputListener();
+        };
+
+        function selectGameMode(m) {
+            gameMode = m;
+            let title = m === 'impostore' ? "L'Impostore" : "Undercover";
+            document.getElementById('header-title').textContent = title;
+            document.getElementById('setup-type-title').textContent = title;
+            goToScreen('screen-setup-type');
         }
-        if (currentVal) select.value = currentVal;
-    }
 
-    function start() {
-        document.getElementById('main-box').className = "container";
-        document.getElementById('imp-guess').value = "";
-        
-        const s = db[Math.floor(Math.random() * db.length)];
-        const impNum = parseInt(document.getElementById('imp-count').value) || 1;
-        
-        let indices = Array.from(Array(ps.length).keys()).sort(() => Math.random() - 0.5);
-        data.imps = indices.slice(0, impNum);
-        data.w = s.w; data.h = s.h; data.cur = 0; data.caughtImps = [];
-        show('screen-role'); updateRole();
-    }
+        function initLocalGameSetup() {
+            playType = 'local';
+            goToScreen('screen-setup-local');
+        }
 
-    function updateRole() {
-        document.getElementById('cur-p-name').innerText = ps[data.cur];
-        document.getElementById('role-text').innerText = "Clicca per vedere il tuo segreto";
-        document.getElementById('btn-next').classList.add('hidden');
-    }
+        function initOnlineGameSetup() {
+            playType = 'online';
+            goToScreen('screen-setup-online');
+        }
 
-    function reveal() {
-        const isImp = data.imps.includes(data.cur);
-        document.getElementById('role-text').innerHTML = isImp ? 
-            `<b style="color:var(--danger)">IMPOSTORE</b><br><small>Indizio: ${data.h}</small>` : 
-            `<b style="color:var(--accent)">CIVILE</b><br><small>Parola: ${data.w}</small>`;
-        document.getElementById('btn-next').classList.remove('hidden');
-    }
+        function goToScreen(screenId) {
+            ['screen-mode', 'screen-setup-type', 'screen-setup-local', 'screen-setup-online', 'screen-reveal', 'screen-discussion', 'screen-voting', 'screen-results'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
 
-    function next() {
-        data.cur++;
-        if (data.cur < ps.length) updateRole();
-        else renderVote();
-    }
+        function setupLocalInputListener() {
+            const input = document.getElementById('local-player-input');
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') addLocalPlayer();
+            });
+        }
 
-    function renderVote() {
-        show('screen-vote');
-        document.getElementById('vote-list').innerHTML = ps.map((p, i) => 
-            `<button id="btn-v-${i}" style="background:#334155; color:white; margin:4px 0;" onclick="vote(${i})">${p}</button>`).join('');
-    }
-
-    function vote(i) {
-        if (data.imps.includes(i)) {
-            if (!data.caughtImps.includes(i)) data.caughtImps.push(i);
-            const btn = document.getElementById(`btn-v-${i}`);
-            btn.style.opacity = "0.3"; btn.disabled = true; btn.innerText = ps[i] + " (BECCATO!)";
-            if (data.caughtImps.length === data.imps.length) setTimeout(() => show('screen-guess'), 600);
-        } else finish(true); 
-    }
-
-    function checkGuess() {
-        const g = document.getElementById('imp-guess').value.trim().toLowerCase();
-        finish(g === data.w.toLowerCase());
-    }
-
-    function finish(impVince) {
-        show('screen-end');
-        const box = document.getElementById('main-box');
-        const title = document.getElementById('end-title');
-        box.className = "container " + (impVince ? "victory-impostore" : "victory-civili");
-        title.innerText = impVince ? "Vince l'Impostore!" : "Vincono i Civili!";
-        title.style.color = impVince ? "var(--danger)" : "var(--success)";
-        document.getElementById('final-impostor-name').innerText = data.imps.map(idx => ps[idx]).join(", ");
-        document.getElementById('final-word').innerText = data.w;
-
-        // --- ASSEGNAZIONE PUNTI E SINCRONIZZAZIONE HUB ---
-        if (ps.length > 0) {
-            const ownerIsImp = data.imps.includes(0);
-            const ownerWon = (impVince && ownerIsImp) || (!impVince && !ownerIsImp);
+        function renderLocalPlayersList() {
+            const listEl = document.getElementById('local-players-list');
+            listEl.innerHTML = '';
+            localPlayers.forEach((p, idx) => {
+                const badge = document.createElement('div');
+                badge.className = "flex items-center space-x-2 bg-white/5 border border-white/5 px-3 py-1.5 rounded-xl text-xs font-medium text-white";
+                badge.innerHTML = `
+                    <span>${p}</span>
+                    <button onclick="removeLocalPlayer(${idx})" class="text-slate-500 hover:text-rose-400 ml-1"><i class="fa-solid fa-xmark text-[10px]"></i></button>
+                `;
+                listEl.appendChild(badge);
+            });
+            document.getElementById('local-player-count').textContent = localPlayers.length;
             
-            if (ownerWon) {
-                score += 10;
-                localStorage.setItem('mm_score', score);
-                localStorage.setItem('points_mastermurder', score); 
-                document.getElementById('pts').innerText = score;
-                title.innerText += " (+10 💎)";
-
-                // Invio postMessage all'Hub genitore
-                const scoreMsg = {
-                    type: 'SCORE_UPDATE',
-                    gameKey: 'master-murder',
-                    points: score
-                };
-                if (window.opener) window.opener.postMessage(scoreMsg, '*');
-                if (window.parent && window.parent !== window) window.parent.postMessage(scoreMsg, '*');
+            let maxImp = Math.max(1, Math.floor(localPlayers.length / 2));
+            if (localImpostorsCount > maxImp) {
+                localImpostorsCount = Math.max(1, maxImp);
+                document.getElementById('local-setting-impostors').textContent = localImpostorsCount;
             }
         }
-    }
 
-    function show(id) {
-        ['screen-setup', 'screen-role', 'screen-vote', 'screen-guess', 'screen-end'].forEach(s => 
-            document.getElementById(s).classList.add('hidden'));
-        document.getElementById(id).classList.remove('hidden');
-    }
-</script>
+        function addLocalPlayer() {
+            const input = document.getElementById('local-player-input');
+            const name = input.value.trim();
+            if (!name || localPlayers.includes(name) || localPlayers.length >= 12) return;
+            localPlayers.push(name);
+            input.value = '';
+            renderLocalPlayersList();
+        }
+
+        function removeLocalPlayer(idx) {
+            localPlayers.splice(idx, 1);
+            renderLocalPlayersList();
+        }
+
+        function adjustLocalImpostors(delta) {
+            let maxImp = Math.max(1, Math.floor(localPlayers.length / 2));
+            let newVal = localImpostorsCount + delta;
+            if (newVal >= 1 && newVal <= maxImp) {
+                localImpostorsCount = newVal;
+                document.getElementById('local-setting-impostors').textContent = newVal;
+            }
+        }
+
+        function startLocalMatch() {
+            if (localPlayers.length < 3) {
+                alert("Aggiungi almeno 3 giocatori per iniziare!");
+                return;
+            }
+
+            const randomPair = wordPairs[Math.floor(Math.random() * wordPairs.length)];
+            localGame.civilWord = randomPair.civil;
+            localGame.impostorWord = randomPair.impostor;
+
+            let shuffled = localPlayers.map((_, i) => i).sort(() => Math.random() - 0.5);
+            let impIndices = shuffled.slice(0, localImpostorsCount);
+
+            localGame.assignedRoles = localPlayers.map((name, idx) => {
+                let isImp = impIndices.includes(idx);
+                return { name, isImp, word: isImp ? randomPair.impostor : randomPair.civil };
+            });
+
+            localGame.revealIndex = 0;
+            goToScreen('screen-reveal');
+            prepareLocalReveal();
+        }
+
+        function prepareLocalReveal() {
+            const cardInner = document.getElementById('card-inner');
+            cardInner.style.transition = 'none';
+            cardInner.classList.remove('flipped');
+            void cardInner.offsetWidth; 
+            cardInner.style.transition = 'transform 0.5s cubic-bezier(0.4, 0.2, 0.2, 1)';
+
+            const player = localGame.assignedRoles[localGame.revealIndex];
+            document.getElementById('reveal-turn-subtitle').textContent = `Passa il dispositivo a`;
+            document.getElementById('reveal-player-title').textContent = player.name;
+            document.getElementById('card-player-label').textContent = player.name;
+            document.getElementById('secret-word-display').textContent = player.word;
+
+            const labelEl = document.getElementById('reveal-card-label');
+            if (gameMode === 'impostore') {
+                if (player.isImp) {
+                    labelEl.textContent = "SEI L'IMPOSTORE (RICEVI UN INDIZIO)";
+                    labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-rose-300 px-4 py-1.5 bg-rose-500/20 border border-rose-500/30 rounded-full shadow-md";
+                } else {
+                    labelEl.textContent = "SEI UN CIVILE";
+                    labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-emerald-300 px-4 py-1.5 bg-emerald-500/20 border border-emerald-500/30 rounded-full shadow-md";
+                }
+            } else {
+                labelEl.textContent = "LA TUA PAROLA SEGRETA";
+                labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-purple-300 px-4 py-1.5 bg-purple-500/20 border border-purple-500/30 rounded-full shadow-md";
+            }
+        }
+
+        function toggleCardFlip() {
+            document.getElementById('card-inner').classList.toggle('flipped');
+        }
+
+        function finishRevealStep() {
+            if (playType === 'local') {
+                localGame.revealIndex++;
+                if (localGame.revealIndex < localGame.assignedRoles.length) {
+                    prepareLocalReveal();
+                } else {
+                    goToScreen('screen-discussion');
+                    resetTimer();
+                }
+            } else {
+                goToScreen('screen-discussion');
+                resetTimer();
+            }
+        }
+
+        function goToVotingPhase() {
+            if (playType === 'local') {
+                localGame.votingIndex = 0;
+                localGame.votes = {};
+                goToScreen('screen-voting');
+                prepareLocalVoteStep();
+            } else {
+                if (db) {
+                    db.collection('rooms').doc(roomCode).update({ status: 'voting' });
+                }
+            }
+        }
+
+        function prepareLocalVoteStep() {
+            const voter = localPlayers[localGame.votingIndex];
+            document.getElementById('voting-subtitle').textContent = `Tocca a ${voter}`;
+            document.getElementById('voting-title').textContent = "Chi voti?";
+            document.getElementById('voting-desc').textContent = "Scegli chi sospetti di più";
+
+            const grid = document.getElementById('voting-candidates-grid');
+            grid.innerHTML = '';
+            localPlayers.forEach((p, targetIdx) => {
+                if (targetIdx === localGame.votingIndex) return; 
+                const btn = document.createElement('button');
+                btn.className = "p-3.5 bg-white/5 hover:bg-white/15 rounded-xl text-xs font-semibold text-white transition-all text-center border border-white/5";
+                btn.textContent = p;
+                btn.onclick = () => castLocalVote(targetIdx);
+                grid.appendChild(btn);
+            });
+        }
+
+        function castLocalVote(targetIdx) {
+            localGame.votes[localGame.votingIndex] = targetIdx;
+            localGame.votingIndex++;
+
+            if (localGame.votingIndex < localPlayers.length) {
+                prepareLocalVoteStep();
+            } else {
+                showLocalResults();
+            }
+        }
+
+        function showLocalResults() {
+            goToScreen('screen-results');
+            document.getElementById('result-civil-word').textContent = localGame.civilWord;
+
+            let impostorNames = localGame.assignedRoles.filter(r => r.isImp).map(r => r.name);
+            document.getElementById('final-impostors-display').textContent = impostorNames.join(", ");
+
+            let voteCounts = {};
+            Object.values(localGame.votes).forEach(targetIdx => {
+                voteCounts[targetIdx] = (voteCounts[targetIdx] || 0) + 1;
+            });
+
+            let mostVotedIdx = -1;
+            let maxV = -1;
+            for (let idx in voteCounts) {
+                if (voteCounts[idx] > maxV) {
+                    maxV = voteCounts[idx];
+                    mostVotedIdx = parseInt(idx);
+                }
+            }
+
+            let mostVotedName = localPlayers[mostVotedIdx];
+            let isImpostorCaught = impostorNames.includes(mostVotedName);
+
+            const badge = document.getElementById('winner-text');
+            const container = document.getElementById('winner-badge');
+
+            if (isImpostorCaught) {
+                badge.textContent = "Vittoria Civili (Impostore Smascherato)";
+                container.className = "inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-extrabold uppercase tracking-wider shadow-md";
+            } else {
+                badge.textContent = "Vittoria Impostori (Infiltrati Salvi)";
+                container.className = "inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs font-extrabold uppercase tracking-wider shadow-md";
+            }
+
+            const breakdown = document.getElementById('votes-breakdown-list');
+            breakdown.innerHTML = '';
+            for (let voterIdx in localGame.votes) {
+                let targetIdx = localGame.votes[voterIdx];
+                let item = document.createElement('div');
+                item.className = "flex justify-between items-center bg-dark-900/80 p-3 rounded-xl border border-white/5 text-xs";
+                item.innerHTML = `
+                    <span class="text-white font-bold">${localPlayers[voterIdx]}</span>
+                    <span class="text-slate-400">ha votato</span>
+                    <span class="text-rose-400 font-semibold">${localPlayers[targetIdx]}</span>
+                `;
+                breakdown.appendChild(item);
+            }
+        }
+
+        function restartGame() {
+            if (playType === 'local') {
+                startLocalMatch();
+            } else {
+                goToScreen('screen-setup-online');
+            }
+        }
+
+        function generateRoomCode() {
+            return Math.random().toString(36).substring(2, 6).toUpperCase();
+        }
+
+        async function createRoom() {
+            myName = document.getElementById('my-name-input').value.trim();
+            if (!myName) { alert("Inserisci il tuo nome."); return; }
+            localStorage.setItem('mm_username', myName);
+
+            roomCode = generateRoomCode();
+            isHost = true;
+
+            const initialRoomData = {
+                host: myName,
+                mode: gameMode,
+                status: 'lobby',
+                impostorsCount: 1,
+                players: [{ name: myName }],
+                roles: {},
+                votes: {},
+                civilWord: "",
+                impostorWord: ""
+            };
+
+            if (db) {
+                try {
+                    await db.collection('rooms').doc(roomCode).set(initialRoomData);
+                } catch(e) {
+                    console.error("Firebase write error:", e);
+                }
+            }
+
+            setupRoomListener();
+            showOnlineLobbyUI();
+        }
+
+        function openJoinModal() {
+            myName = document.getElementById('my-name-input').value.trim();
+            if (!myName) { alert("Inserisci prima il tuo nome."); return; }
+            localStorage.setItem('mm_username', myName);
+            document.getElementById('modal-join').classList.remove('hidden');
+        }
+
+        function closeJoinModal() { document.getElementById('modal-join').classList.add('hidden'); }
+
+        async function joinRoom() {
+            const code = document.getElementById('join-code-input').value.trim().toUpperCase();
+            if (!code) return;
+
+            if (db) {
+                try {
+                    const docRef = db.collection('rooms').doc(code);
+                    const doc = await docRef.get();
+                    if (!doc.exists) { alert("Stanza non trovata!"); return; }
+                    let data = doc.data();
+                    if (!data.players.some(p => p.name === myName)) {
+                        data.players.push({ name: myName });
+                        await docRef.update({ players: data.players });
+                    }
+                } catch(e) {
+                    console.error("Firebase join error:", e);
+                }
+            }
+
+            roomCode = code;
+            isHost = false;
+            closeJoinModal();
+            setupRoomListener();
+            showOnlineLobbyUI();
+        }
+
+        function showOnlineLobbyUI() {
+            document.getElementById('room-badge').classList.remove('hidden');
+            document.getElementById('room-code-display').textContent = roomCode;
+            document.getElementById('lobby-room-code').textContent = `Codice: ${roomCode}`;
+            document.getElementById('room-lobby-box').classList.remove('hidden');
+            
+            if (isHost) {
+                document.getElementById('start-game-btn').classList.remove('hidden');
+                document.getElementById('waiting-host-msg').classList.add('hidden');
+                document.getElementById('host-controls').classList.remove('hidden');
+            } else {
+                document.getElementById('start-game-btn').classList.add('hidden');
+                document.getElementById('waiting-host-msg').classList.remove('hidden');
+                document.getElementById('host-controls').classList.add('hidden');
+            }
+        }
+
+        function setupRoomListener() {
+            if (!db) return;
+            if (unsubscribeRoom) unsubscribeRoom();
+
+            unsubscribeRoom = db.collection('rooms').doc(roomCode).onSnapshot((doc) => {
+                if (!doc.exists) return;
+                const data = doc.data();
+
+                const listEl = document.getElementById('online-players-list');
+                listEl.innerHTML = '';
+                data.players.forEach(p => {
+                    const badge = document.createElement('div');
+                    badge.className = "flex items-center space-x-2 bg-white/5 border border-white/5 px-3 py-1.5 rounded-xl text-xs font-medium text-white";
+                    badge.innerHTML = `<span>${p.name}</span>`;
+                    listEl.appendChild(badge);
+                });
+                document.getElementById('online-player-count').textContent = data.players.length;
+                document.getElementById('online-setting-impostors').textContent = data.impostorsCount;
+
+                if (data.status === 'reveal') {
+                    showOnlineReveal(data);
+                } else if (data.status === 'discussion') {
+                    goToScreen('screen-discussion');
+                } else if (data.status === 'voting') {
+                    showOnlineVoting(data);
+                } else if (data.status === 'results') {
+                    showOnlineResults(data);
+                }
+            });
+        }
+
+        function adjustOnlineImpostors(delta) {
+            if (!isHost || !db) return;
+        }
+
+        async function startOnlineMatch() {
+            if (!isHost || !db) return;
+            const docRef = db.collection('rooms').doc(roomCode);
+            const doc = await docRef.get();
+            const data = doc.data();
+
+            const randomPair = wordPairs[Math.floor(Math.random() * wordPairs.length)];
+            let players = data.players;
+            let shuffled = players.map((_, i) => i).sort(() => Math.random() - 0.5);
+            let impIndices = shuffled.slice(0, data.impostorsCount);
+
+            let roles = {};
+            players.forEach((p, idx) => {
+                let isImp = impIndices.includes(idx);
+                roles[p.name] = { isImp, word: isImp ? randomPair.impostor : randomPair.civil };
+            });
+
+            await docRef.update({
+                status: 'reveal',
+                civilWord: randomPair.civil,
+                impostorWord: randomPair.impostor,
+                roles: roles
+            });
+        }
+
+        function showOnlineReveal(data) {
+            goToScreen('screen-reveal');
+            const myRole = data.roles[myName];
+            if (!myRole) return;
+
+            const cardInner = document.getElementById('card-inner');
+            cardInner.style.transition = 'none';
+            cardInner.classList.remove('flipped');
+            void cardInner.offsetWidth;
+            cardInner.style.transition = 'transform 0.5s cubic-bezier(0.4, 0.2, 0.2, 1)';
+
+            document.getElementById('reveal-turn-subtitle').textContent = "Il tuo Ruolo";
+            document.getElementById('reveal-player-title').textContent = myName;
+            document.getElementById('card-player-label').textContent = myName;
+            document.getElementById('secret-word-display').textContent = myRole.word;
+            
+            const labelEl = document.getElementById('reveal-card-label');
+            if (gameMode === 'impostore') {
+                if (myRole.isImp) {
+                    labelEl.textContent = "SEI L'IMPOSTORE (RICEVI UN INDIZIO)";
+                    labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-rose-300 px-4 py-1.5 bg-rose-500/20 border border-rose-500/30 rounded-full shadow-md";
+                } else {
+                    labelEl.textContent = "SEI UN CIVILE";
+                    labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-emerald-300 px-4 py-1.5 bg-emerald-500/20 border border-emerald-500/30 rounded-full shadow-md";
+                }
+            } else {
+                labelEl.textContent = "LA TUA PAROLA SEGRETA";
+                labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-purple-300 px-4 py-1.5 bg-purple-500/20 border border-purple-500/30 rounded-full shadow-md";
+            }
+        }
+
+        async function showOnlineVoting(data) {
+            goToScreen('screen-voting');
+            document.getElementById('voting-subtitle').textContent = "Votazione Segreta";
+            document.getElementById('voting-title').textContent = "Chi voti?";
+            document.getElementById('voting-desc').textContent = "Scegli chi sospetti di più";
+
+            const grid = document.getElementById('voting-candidates-grid');
+            grid.innerHTML = '';
+            
+            data.players.forEach(p => {
+                if (p.name === myName) return; 
+                const btn = document.createElement('button');
+                btn.className = "p-3.5 bg-white/5 hover:bg-white/15 rounded-xl text-xs font-semibold text-white transition-all text-center border border-white/5";
+                btn.textContent = p.name;
+                btn.onclick = () => castOnlineVote(p.name, data);
+                grid.appendChild(btn);
+            });
+        }
+
+        async function castOnlineVote(targetName, data) {
+            if (!db) return;
+            const docRef = db.collection('rooms').doc(roomCode);
+            const doc = await docRef.get();
+            let votes = doc.data().votes || {};
+            votes[myName] = targetName;
+
+            let updateData = { votes: votes };
+            if (Object.keys(votes).length >= data.players.length && isHost) {
+                updateData.status = 'results';
+            }
+            await docRef.update(updateData);
+            goToScreen('screen-discussion');
+        }
+
+        function showOnlineResults(data) {
+            goToScreen('screen-results');
+            document.getElementById('result-civil-word').textContent = data.civilWord;
+
+            let impostors = [];
+            for (let name in data.roles) {
+                if (data.roles[name].isImp) impostors.push(name);
+            }
+            document.getElementById('final-impostors-display').textContent = impostors.join(", ");
+
+            let voteCounts = {};
+            Object.values(data.votes || {}).forEach(target => {
+                voteCounts[target] = (voteCounts[target] || 0) + 1;
+            });
+
+            let mostVoted = "-";
+            let maxV = -1;
+            for (let t in voteCounts) {
+                if (voteCounts[t] > maxV) { maxV = voteCounts[t]; mostVoted = t; }
+            }
+
+            const isImpostorCaught = impostors.includes(mostVoted);
+            const badge = document.getElementById('winner-text');
+            const container = document.getElementById('winner-badge');
+
+            if (isImpostorCaught) {
+                badge.textContent = "Vittoria Civili (Impostore Smascherato)";
+                container.className = "inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-extrabold uppercase tracking-wider shadow-md";
+            } else {
+                badge.textContent = "Vittoria Impostori (Infiltrati Salvi)";
+                container.className = "inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs font-extrabold uppercase tracking-wider shadow-md";
+            }
+
+            const breakdown = document.getElementById('votes-breakdown-list');
+            breakdown.innerHTML = '';
+            for (let voter in (data.votes || {})) {
+                let votedFor = data.votes[voter];
+                let item = document.createElement('div');
+                item.className = "flex justify-between items-center bg-dark-900/80 p-3 rounded-xl border border-white/5 text-xs";
+                item.innerHTML = `
+                    <span class="text-white font-bold">${voter}</span>
+                    <span class="text-slate-400">ha votato</span>
+                    <span class="text-rose-400 font-semibold">${votedFor}</span>
+                `;
+                breakdown.appendChild(item);
+            }
+        }
+
+        function toggleTimer() {
+            if (isTimerRunning) {
+                clearInterval(timerInterval);
+                isTimerRunning = false;
+                document.getElementById('timer-btn-text').textContent = "Riprendi";
+                document.getElementById('timer-icon').className = "fa-solid fa-play text-purple-400";
+            } else {
+                isTimerRunning = true;
+                document.getElementById('timer-btn-text').textContent = "Pausa";
+                document.getElementById('timer-icon').className = "fa-solid fa-pause text-purple-400";
+                timerInterval = setInterval(() => {
+                    if (timeLeft > 0) {
+                        timeLeft--;
+                        updateTimerDisplay();
+                    } else {
+                        clearInterval(timerInterval);
+                        isTimerRunning = false;
+                        goToVotingPhase();
+                    }
+                }, 1000);
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            timeLeft = 120;
+            updateTimerDisplay();
+            document.getElementById('timer-btn-text').textContent = "Avvia Timer";
+            document.getElementById('timer-icon').className = "fa-solid fa-play text-purple-400";
+        }
+
+        function updateTimerDisplay() {
+            let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            let s = (timeLeft % 60).toString().padStart(2, '0');
+            document.getElementById('timer-display').textContent = `${m}:${s}`;
+        }
+
+        function openRulesModal() { document.getElementById('modal-rules').classList.remove('hidden'); }
+        function closeRulesModal() { document.getElementById('modal-rules').classList.add('hidden'); }
+    </script>
 </body>
 </html>
+7
