@@ -570,6 +570,35 @@
             }
         }
 
+        async function startOnlineMatch() {
+    if (!isHost || !db) return;
+    const docRef = db.collection('rooms').doc(roomCode);
+    const doc = await docRef.get();
+    if (!doc.exists) return;
+    const data = doc.data();
+
+    // Seleziona una coppia di parole casuale
+    const randomPair = wordPairs[Math.floor(Math.random() * wordPairs.length)];
+    let players = data.players;
+    let shuffled = players.map((_, i) => i).sort(() => Math.random() - 0.5);
+    let impIndices = shuffled.slice(0, data.impostorsCount || 1);
+
+    // Assegna i ruoli a ciascun giocatore
+    let roles = {};
+    players.forEach((p, idx) => {
+        let isImp = impIndices.includes(idx);
+        roles[p.name] = { isImp, word: isImp ? randomPair.impostor : randomPair.civil };
+    });
+
+    // Aggiorna lo stato su Firebase: questo farà scattare il listener per tutti i partecipanti
+    await docRef.update({
+        status: 'reveal',
+        civilWord: randomPair.civil,
+        impostorWord: randomPair.impostor,
+        roles: roles
+    });
+}
+
         function startLocalMatch() {
             if (localPlayers.length < 3) {
                 alert("Aggiungi almeno 3 giocatori per iniziare!");
@@ -847,15 +876,15 @@
                 document.getElementById('online-player-count').textContent = data.players.length;
                 document.getElementById('online-setting-impostors').textContent = data.impostorsCount;
 
-                if (data.status === 'reveal') {
-                    showOnlineReveal(data);
-                } else if (data.status === 'discussion') {
-                    goToScreen('screen-discussion');
-                } else if (data.status === 'voting') {
-                    showOnlineVoting(data);
-                } else if (data.status === 'results') {
-                    showOnlineResults(data);
-                }
+if (data.status === 'reveal') {
+    showOnlineReveal(data);
+} else if (data.status === 'discussion') {
+    goToScreen('screen-discussion');
+} else if (data.status === 'voting') {
+    showOnlineVoting(data);
+} else if (data.status === 'results') {
+    showOnlineResults(data);
+}
             });
         }
 
@@ -927,19 +956,19 @@ async function adjustOnlineImpostors(delta) {
         }
 
         async function castOnlineVote(targetName, data) {
-            if (!db) return;
-            const docRef = db.collection('rooms').doc(roomCode);
-            const doc = await docRef.get();
-            let votes = doc.data().votes || {};
-            votes[myName] = targetName;
+    if (!db) return;
+    const docRef = db.collection('rooms').doc(roomCode);
+    const doc = await docRef.get();
+    let votes = doc.data().votes || {};
+    votes[myName] = targetName;
 
-            let updateData = { votes: votes };
-            if (Object.keys(votes).length >= data.players.length && isHost) {
-                updateData.status = 'results';
-            }
-            await docRef.update(updateData);
-            goToScreen('screen-discussion');
-        }
+    let updateData = { votes: votes };
+    if (Object.keys(votes).length >= data.players.length && isHost) {
+        updateData.status = 'results';
+    }
+    await docRef.update(updateData);
+
+}
 
         function showOnlineResults(data) {
             goToScreen('screen-results');
