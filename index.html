@@ -578,7 +578,7 @@
             votes: {},
             currentDiceRule: "",
             chatMessages: [],
-            localMessagesSent: {} // traccia i messaggi inviati dal Silenzioso in locale
+            localMessagesSent: {}
         };
 
         let roomCode = null;
@@ -617,21 +617,26 @@
 
         function goToScreen(screenId) {
             ['screen-mode', 'screen-setup-type', 'screen-setup-local', 'screen-setup-online', 'screen-reveal', 'screen-discussion', 'screen-chat', 'screen-voting', 'screen-results'].forEach(id => {
-                document.getElementById(id).classList.add('hidden');
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
             });
-            document.getElementById(screenId).classList.remove('hidden');
+            const target = document.getElementById(screenId);
+            if (target) target.classList.remove('hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function setupLocalInputListener() {
             const input = document.getElementById('local-player-input');
-            input.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') addLocalPlayer();
-            });
+            if (input) {
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') addLocalPlayer();
+                });
+            }
         }
 
         function renderLocalPlayersList() {
             const listEl = document.getElementById('local-players-list');
+            if (!listEl) return;
             listEl.innerHTML = '';
             localPlayers.forEach((p, idx) => {
                 const badge = document.createElement('div');
@@ -639,17 +644,20 @@
                 badge.innerHTML = `<span>${p}</span><button onclick="removeLocalPlayer(${idx})" class="text-slate-500 hover:text-rose-400 ml-1"><i class="fa-solid fa-xmark text-[10px]"></i></button>`;
                 listEl.appendChild(badge);
             });
-            document.getElementById('local-player-count').textContent = localPlayers.length;
+            const countEl = document.getElementById('local-player-count');
+            if (countEl) countEl.textContent = localPlayers.length;
             
             let maxImp = Math.max(1, Math.floor(localPlayers.length / 2));
             if (localImpostorsCount > maxImp) {
                 localImpostorsCount = Math.max(1, maxImp);
-                document.getElementById('local-setting-impostors').textContent = localImpostorsCount;
+                const settingImp = document.getElementById('local-setting-impostors');
+                if (settingImp) settingImp.textContent = localImpostorsCount;
             }
         }
 
         function addLocalPlayer() {
             const input = document.getElementById('local-player-input');
+            if (!input) return;
             const name = input.value.trim();
             if (!name || localPlayers.includes(name) || localPlayers.length >= 12) return;
             localPlayers.push(name);
@@ -667,96 +675,100 @@
             let newVal = localImpostorsCount + delta;
             if (newVal >= 1 && newVal <= maxImp) {
                 localImpostorsCount = newVal;
-                document.getElementById('local-setting-impostors').textContent = newVal;
+                const settingImp = document.getElementById('local-setting-impostors');
+                if (settingImp) settingImp.textContent = newVal;
             }
         }
 
         function getSelectedModifiersLocal() {
             return {
-                silent: document.getElementById('mod-silent').checked,
-                chaotic: document.getElementById('mod-chaotic').checked,
-                fakeclue: document.getElementById('mod-fakeclue').checked
+                silent: document.getElementById('mod-silent')?.checked || false,
+                chaotic: document.getElementById('mod-chaotic')?.checked || false,
+                fakeclue: document.getElementById('mod-fakeclue')?.checked || false
             };
         }
 
         async function updateOnlineModifiers() {
-            if (!isHost || !db) return;
+            if (!isHost || !db || !roomCode) return;
             const mods = {
-                silent: document.getElementById('online-mod-silent').checked,
-                chaotic: document.getElementById('online-mod-chaotic').checked,
-                fakeclue: document.getElementById('online-mod-fakeclue').checked
+                silent: document.getElementById('online-mod-silent')?.checked || false,
+                chaotic: document.getElementById('online-mod-chaotic')?.checked || false,
+                fakeclue: document.getElementById('online-mod-fakeclue')?.checked || false
             };
-            await db.collection('rooms').doc(roomCode).update({ modifiers: mods });
+            try {
+                await db.collection('rooms').doc(roomCode).update({ modifiers: mods });
+            } catch(e) { console.error(e); }
         }
 
         async function startOnlineMatch() {
-            if (!isHost || !db) return;
-            const docRef = db.collection('rooms').doc(roomCode);
-            const doc = await docRef.get();
-            if (!doc.exists) return;
-            const data = doc.data();
+            if (!isHost || !db || !roomCode) return;
+            try {
+                const docRef = db.collection('rooms').doc(roomCode);
+                const doc = await docRef.get();
+                if (!doc.exists) return;
+                const data = doc.data();
 
-            const randomPair = wordPairs[Math.floor(Math.random() * wordPairs.length)];
-            const chosenDice = luckDiceOptions[Math.floor(Math.random() * luckDiceOptions.length)];
+                const randomPair = wordPairs[Math.floor(Math.random() * wordPairs.length)];
+                const chosenDice = luckDiceOptions[Math.floor(Math.random() * luckDiceOptions.length)];
 
-            let players = data.players;
-            let shuffled = players.map((_, i) => i).sort(() => Math.random() - 0.5);
-            let impIndices = shuffled.slice(0, data.impostorsCount || 1);
-            let civilians = shuffled.filter(i => !impIndices.includes(i));
+                let players = data.players || [];
+                let shuffled = players.map((_, i) => i).sort(() => Math.random() - 0.5);
+                let impIndices = shuffled.slice(0, data.impostorsCount || 1);
+                let civilians = shuffled.filter(i => !impIndices.includes(i));
 
-            let chaoticName = "";
-            let chaoticWord = "";
-            if (data.modifiers && data.modifiers.chaotic && civilians.length > 1) {
-                let cIdx = civilians.splice(Math.floor(Math.random() * civilians.length), 1)[0];
-                chaoticName = players[cIdx].name;
-                // Estraiamo una parola diversa per il caotico
-                let otherPairs = wordPairs.filter(p => p.civil !== randomPair.civil);
-                let chaoticPair = otherPairs[Math.floor(Math.random() * otherPairs.length)];
-                chaoticWord = chaoticPair.civil;
-            }
-
-            let silentName = "";
-            let remainingForSilent = shuffled.filter(i => !impIndices.includes(i) && players[i].name !== chaoticName);
-            if (data.modifiers && data.modifiers.silent && remainingForSilent.length > 0) {
-                let sIdx = remainingForSilent[Math.floor(Math.random() * remainingForSilent.length)];
-                silentName = players[sIdx].name;
-            }
-
-            let roles = {};
-            players.forEach((p, idx) => {
-                let isImp = impIndices.includes(idx);
-                let isChaotic = (p.name === chaoticName);
-                let isSilent = (p.name === silentName);
-                let word = randomPair.civil;
-                let fakeText = "";
-                let modText = "";
-
-                if (isImp) {
-                    word = randomPair.impostor;
-                    if (data.modifiers && data.modifiers.fakeclue) {
-                        fakeText = `o ${randomPair.impostor} o ${randomPair.fake}`;
-                    }
-                } else if (isChaotic) {
-                    word = chaoticWord;
+                let chaoticName = "";
+                let chaoticWord = "";
+                if (data.modifiers && data.modifiers.chaotic && civilians.length > 1) {
+                    let cIdx = civilians.splice(Math.floor(Math.random() * civilians.length), 1)[0];
+                    chaoticName = players[cIdx].name;
+                    let otherPairs = wordPairs.filter(p => p.civil !== randomPair.civil);
+                    let chaoticPair = otherPairs[Math.floor(Math.random() * otherPairs.length)];
+                    chaoticWord = chaoticPair.civil;
                 }
 
-                if (isSilent) modText = "Sei IL SILENZIOSO: puoi inviare un solo messaggio in chat!";
+                let silentName = "";
+                let remainingForSilent = shuffled.filter(i => !impIndices.includes(i) && players[i].name !== chaoticName);
+                if (data.modifiers && data.modifiers.silent && remainingForSilent.length > 0) {
+                    let sIdx = remainingForSilent[Math.floor(Math.random() * remainingForSilent.length)];
+                    silentName = players[sIdx].name;
+                }
 
-                roles[p.name] = { isImp, isChaotic, isSilent, word, fakeText, modText };
-            });
+                let roles = {};
+                players.forEach((p, idx) => {
+                    let isImp = impIndices.includes(idx);
+                    let isChaotic = (p.name === chaoticName);
+                    let isSilent = (p.name === silentName);
+                    let word = randomPair.civil;
+                    let fakeText = "";
+                    let modText = "";
 
-            await docRef.update({
-                status: 'reveal',
-                civilWord: randomPair.civil,
-                impostorWord: randomPair.impostor,
-                luckRule: chosenDice,
-                chaoticPlayer: chaoticName,
-                silentPlayer: silentName,
-                roles: roles,
-                chatMessages: [],
-                timerRunning: false,
-                timeLeft: 120
-            });
+                    if (isImp) {
+                        word = randomPair.impostor;
+                        if (data.modifiers && data.modifiers.fakeclue) {
+                            fakeText = `o ${randomPair.impostor} o ${randomPair.fake}`;
+                        }
+                    } else if (isChaotic) {
+                        word = chaoticWord;
+                    }
+
+                    if (isSilent) modText = "Sei IL SILENZIOSO: puoi inviare un solo messaggio in chat!";
+
+                    roles[p.name] = { isImp, isChaotic, isSilent, word, fakeText, modText };
+                });
+
+                await docRef.update({
+                    status: 'reveal',
+                    civilWord: randomPair.civil,
+                    impostorWord: randomPair.impostor,
+                    luckRule: chosenDice,
+                    chaoticPlayer: chaoticName,
+                    silentPlayer: silentName,
+                    roles: roles,
+                    chatMessages: [],
+                    timerRunning: false,
+                    timeLeft: 120
+                });
+            } catch(e) { console.error(e); }
         }
 
         function startLocalMatch() {
@@ -821,47 +833,54 @@
 
         function prepareLocalReveal() {
             const cardInner = document.getElementById('card-inner');
+            if (!cardInner) return;
             cardInner.style.transition = 'none';
             cardInner.classList.remove('flipped');
             void cardInner.offsetWidth; 
             cardInner.style.transition = 'transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1)';
 
             const player = localGame.assignedRoles[localGame.revealIndex];
+            if (!player) return;
+
             document.getElementById('reveal-turn-subtitle').textContent = `Passa il dispositivo a`;
             document.getElementById('reveal-player-title').textContent = player.name;
             document.getElementById('card-player-label').textContent = player.name;
             document.getElementById('secret-word-display').textContent = player.word;
             
             const fakeEl = document.getElementById('fake-clue-display');
-            if (player.fakeText) {
+            if (player.fakeText && fakeEl) {
                 fakeEl.textContent = player.fakeText;
                 fakeEl.classList.remove('hidden');
-            } else {
+            } else if (fakeEl) {
                 fakeEl.classList.add('hidden');
             }
 
-            document.getElementById('modifier-badge-display').textContent = player.modText || "";
+            const modEl = document.getElementById('modifier-badge-display');
+            if (modEl) modEl.textContent = player.modText || "";
 
             const labelEl = document.getElementById('reveal-card-label');
-            if (gameMode === 'impostore') {
-                if (player.isImp) {
-                    labelEl.textContent = "SEI L'IMPOSTORE";
-                    labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-rose-300 px-4 py-1.5 bg-rose-500/20 border border-rose-500/30 rounded-full shadow-md";
-                } else if (player.isChaotic) {
-                    labelEl.textContent = "SEI IL CAOTICO";
-                    labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-amber-300 px-4 py-1.5 bg-amber-500/20 border border-amber-500/30 rounded-full shadow-md";
+            if (labelEl) {
+                if (gameMode === 'impostore') {
+                    if (player.isImp) {
+                        labelEl.textContent = "SEI L'IMPOSTORE";
+                        labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-rose-300 px-4 py-1.5 bg-rose-500/20 border border-rose-500/30 rounded-full shadow-md";
+                    } else if (player.isChaotic) {
+                        labelEl.textContent = "SEI IL CAOTICO";
+                        labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-amber-300 px-4 py-1.5 bg-amber-500/20 border border-amber-500/30 rounded-full shadow-md";
+                    } else {
+                        labelEl.textContent = "SEI UN CIVILE";
+                        labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-emerald-300 px-4 py-1.5 bg-emerald-500/20 border border-emerald-500/20 rounded-full shadow-md";
+                    }
                 } else {
-                    labelEl.textContent = "SEI UN CIVILE";
-                    labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-emerald-300 px-4 py-1.5 bg-emerald-500/20 border border-emerald-500/20 rounded-full shadow-md";
+                    labelEl.textContent = "LA TUA PAROLA SEGRETA";
+                    labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-purple-300 px-4 py-1.5 bg-purple-500/20 border border-purple-500/20 rounded-full shadow-md";
                 }
-            } else {
-                labelEl.textContent = "LA TUA PAROLA SEGRETA";
-                labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-purple-300 px-4 py-1.5 bg-purple-500/20 border border-purple-500/20 rounded-full shadow-md";
             }
         }
 
         function toggleCardFlip() {
-            document.getElementById('card-inner').classList.toggle('flipped');
+            const cardInner = document.getElementById('card-inner');
+            if (cardInner) cardInner.classList.toggle('flipped');
         }
 
         function finishRevealStep() {
@@ -871,7 +890,8 @@
                     prepareLocalReveal();
                 } else {
                     goToScreen('screen-discussion');
-                    document.getElementById('luck-dice-text').textContent = localGame.currentDiceRule;
+                    const diceEl = document.getElementById('luck-dice-text');
+                    if (diceEl) diceEl.textContent = localGame.currentDiceRule;
                     resetTimer();
                 }
             } else {
@@ -885,14 +905,15 @@
                 goToScreen('screen-chat');
                 renderLocalChat();
             } else {
-                if (db && isHost) {
-                    db.collection('rooms').doc(roomCode).update({ status: 'chat' });
+                if (db && isHost && roomCode) {
+                    db.collection('rooms').doc(roomCode).update({ status: 'chat' }).catch(e => console.error(e));
                 }
             }
         }
 
         function renderLocalChat() {
             const container = document.getElementById('chat-messages-container');
+            if (!container) return;
             container.innerHTML = '';
             localGame.chatMessages.forEach(msg => {
                 const div = document.createElement('div');
@@ -905,11 +926,11 @@
 
         async function sendChatMessage() {
             const input = document.getElementById('chat-input-msg');
+            if (!input) return;
             const text = input.value.trim();
             if (!text) return;
 
             if (playType === 'local') {
-                // In modalità locale chiediamo chi sta scrivendo o usiamo un prompt/selettore se necessario, oppure prendiamo un mittente a scelta. Semplifichiamo permettendo di scegliere o inserire il nome in chat se non specificato, oppure usiamo un prompt rapido o un selettore.
                 let senderName = prompt("Chi sta scrivendo questo messaggio?", localPlayers[0] || "Giocatore");
                 if (!senderName || !localPlayers.includes(senderName)) return;
 
@@ -927,23 +948,26 @@
                 input.value = '';
                 renderLocalChat();
             } else {
-                if (!db) return;
-                const docRef = db.collection('rooms').doc(roomCode);
-                const doc = await docRef.get();
-                const data = doc.data();
-                
-                let myRole = data.roles[myName];
-                let msgs = data.chatMessages || [];
-                let myMsgCount = msgs.filter(m => m.sender === myName).length;
+                if (!db || !roomCode) return;
+                try {
+                    const docRef = db.collection('rooms').doc(roomCode);
+                    const doc = await docRef.get();
+                    if (!doc.exists) return;
+                    const data = doc.data();
+                    
+                    let myRole = data.roles?.[myName];
+                    let msgs = data.chatMessages || [];
+                    let myMsgCount = msgs.filter(m => m.sender === myName).length;
 
-                if (myRole && myRole.isSilent && myMsgCount >= 1) {
-                    alert("Sei Il Silenzioso e hai già inviato il tuo messaggio concesso!");
-                    return;
-                }
+                    if (myRole && myRole.isSilent && myMsgCount >= 1) {
+                        alert("Sei Il Silenzioso e hai già inviato il tuo messaggio concesso!");
+                        return;
+                    }
 
-                msgs.push({ sender: myName, text: text });
-                input.value = '';
-                await docRef.update({ chatMessages: msgs });
+                    msgs.push({ sender: myName, text: text });
+                    input.value = '';
+                    await docRef.update({ chatMessages: msgs });
+                } catch(e) { console.error(e); }
             }
         }
 
@@ -954,19 +978,23 @@
                 goToScreen('screen-voting');
                 prepareLocalVoteStep();
             } else {
-                if (db && isHost) {
-                    db.collection('rooms').doc(roomCode).update({ status: 'voting' });
+                if (db && isHost && roomCode) {
+                    db.collection('rooms').doc(roomCode).update({ status: 'voting' }).catch(e => console.error(e));
                 }
             }
         }
 
         function prepareLocalVoteStep() {
             const voter = localPlayers[localGame.votingIndex];
-            document.getElementById('voting-subtitle').textContent = `Tocca a ${voter}`;
-            document.getElementById('voting-title').textContent = "Chi voti?";
-            document.getElementById('voting-desc').textContent = "Scegli chi sospetti di più";
+            const subEl = document.getElementById('voting-subtitle');
+            if (subEl) subEl.textContent = `Tocca a ${voter}`;
+            const titleEl = document.getElementById('voting-title');
+            if (titleEl) titleEl.textContent = "Chi voti?";
+            const descEl = document.getElementById('voting-desc');
+            if (descEl) descEl.textContent = "Scegli chi sospetti di più";
 
             const grid = document.getElementById('voting-candidates-grid');
+            if (!grid) return;
             grid.innerHTML = '';
             localPlayers.forEach((p, targetIdx) => {
                 if (targetIdx === localGame.votingIndex) return; 
@@ -1015,16 +1043,20 @@
 
         function showLocalResults() {
             goToScreen('screen-results');
-            document.getElementById('result-civil-word').textContent = localGame.civilWord;
+            const civilWordEl = document.getElementById('result-civil-word');
+            if (civilWordEl) civilWordEl.textContent = localGame.civilWord;
 
             let impostorNames = localGame.assignedRoles.filter(r => r.isImp).map(r => r.name);
-            document.getElementById('final-impostors-display').textContent = impostorNames.join(", ");
+            const impDisplay = document.getElementById('final-impostors-display');
+            if (impDisplay) impDisplay.textContent = impostorNames.join(", ");
 
-            if (localGame.chaoticPlayer) {
-                document.getElementById('result-chaotic-box').classList.remove('hidden');
-                document.getElementById('final-chaotic-display').textContent = localGame.chaoticPlayer;
-            } else {
-                document.getElementById('result-chaotic-box').classList.add('hidden');
+            const chaoticBox = document.getElementById('result-chaotic-box');
+            const chaoticDisplay = document.getElementById('final-chaotic-display');
+            if (localGame.chaoticPlayer && chaoticBox && chaoticDisplay) {
+                chaoticBox.classList.remove('hidden');
+                chaoticDisplay.textContent = localGame.chaoticPlayer;
+            } else if (chaoticBox) {
+                chaoticBox.classList.add('hidden');
             }
 
             let voteCounts = {};
@@ -1038,14 +1070,17 @@
             const badge = document.getElementById('winner-text');
             const container = document.getElementById('winner-badge');
 
-            badge.textContent = winCheck.message;
-            if (winCheck.success) {
-                container.className = "inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-extrabold uppercase tracking-wider shadow-md";
-            } else {
-                container.className = "inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs font-extrabold uppercase tracking-wider shadow-md";
+            if (badge) badge.textContent = winCheck.message;
+            if (container) {
+                if (winCheck.success) {
+                    container.className = "inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-extrabold uppercase tracking-wider shadow-md";
+                } else {
+                    container.className = "inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs font-extrabold uppercase tracking-wider shadow-md";
+                }
             }
 
             const breakdown = document.getElementById('votes-breakdown-list');
+            if (!breakdown) return;
             breakdown.innerHTML = '';
             for (let voterIdx in localGame.votes) {
                 let targetIdx = localGame.votes[voterIdx];
@@ -1069,7 +1104,9 @@
         }
 
         async function createRoom() {
-            myName = document.getElementById('my-name-input').value.trim();
+            const inputName = document.getElementById('my-name-input');
+            if (!inputName) return;
+            myName = inputName.value.trim();
             if (!myName) { alert("Inserisci il tuo nome."); return; }
             localStorage.setItem('mm_username', myName);
 
@@ -1096,7 +1133,9 @@
             };
 
             if (db) {
-                try { await db.collection('rooms').doc(roomCode).set(initialRoomData); } catch(e) { console.error(e); }
+                try {
+                    await db.collection('rooms').doc(roomCode).set(initialRoomData);
+                } catch(e) { console.error(e); }
             }
 
             setupRoomListener();
@@ -1104,16 +1143,24 @@
         }
 
         function openJoinModal() {
-            myName = document.getElementById('my-name-input').value.trim();
+            const inputName = document.getElementById('my-name-input');
+            if (!inputName) return;
+            myName = inputName.value.trim();
             if (!myName) { alert("Inserisci prima il tuo nome."); return; }
             localStorage.setItem('mm_username', myName);
-            document.getElementById('modal-join').classList.remove('hidden');
+            const modal = document.getElementById('modal-join');
+            if (modal) modal.classList.remove('hidden');
         }
 
-        function closeJoinModal() { document.getElementById('modal-join').classList.add('hidden'); }
+        function closeJoinModal() {
+            const modal = document.getElementById('modal-join');
+            if (modal) modal.classList.add('hidden');
+        }
 
         async function joinRoom() {
-            const code = document.getElementById('join-code-input').value.trim().toUpperCase();
+            const codeInput = document.getElementById('join-code-input');
+            if (!codeInput) return;
+            const code = codeInput.value.trim().toUpperCase();
             if (!code) return;
 
             if (db) {
@@ -1122,9 +1169,10 @@
                     const doc = await docRef.get();
                     if (!doc.exists) { alert("Stanza non trovata!"); return; }
                     let data = doc.data();
-                    if (!data.players.some(p => p.name === myName)) {
-                        data.players.push({ name: myName });
-                        await docRef.update({ players: data.players });
+                    let players = data.players || [];
+                    if (!players.some(p => p.name === myName)) {
+                        players.push({ name: myName });
+                        await docRef.update({ players: players });
                     }
                 } catch(e) { console.error(e); }
             }
@@ -1137,30 +1185,41 @@
         }
 
         function showOnlineLobbyUI() {
-            document.getElementById('room-badge').classList.remove('hidden');
-            document.getElementById('room-code-display').textContent = roomCode;
-            document.getElementById('lobby-room-code').textContent = `Codice: ${roomCode}`;
-            document.getElementById('room-lobby-box').classList.remove('hidden');
+            const badge = document.getElementById('room-badge');
+            if (badge) badge.classList.remove('hidden');
+            const codeDisplay = document.getElementById('room-code-display');
+            if (codeDisplay) codeDisplay.textContent = roomCode;
+            const lobbyCode = document.getElementById('lobby-room-code');
+            if (lobbyCode) lobbyCode.textContent = `Codice: ${roomCode}`;
+            const lobbyBox = document.getElementById('room-lobby-box');
+            if (lobbyBox) lobbyBox.classList.remove('hidden');
             
+            const startBtn = document.getElementById('start-game-btn');
+            const waitMsg = document.getElementById('waiting-host-msg');
+            const hostControls = document.getElementById('host-controls');
+            const hostTimer = document.getElementById('host-timer-controls');
+            const guestTimer = document.getElementById('guest-timer-msg');
+            const hostMods = document.getElementById('host-modifiers-box');
+
             if (isHost) {
-                document.getElementById('start-game-btn').classList.remove('hidden');
-                document.getElementById('waiting-host-msg').classList.add('hidden');
-                document.getElementById('host-controls').classList.remove('hidden');
-                document.getElementById('host-timer-controls').classList.remove('hidden');
-                document.getElementById('guest-timer-msg').classList.add('hidden');
-                document.getElementById('host-modifiers-box').classList.remove('hidden');
+                startBtn?.classList.remove('hidden');
+                waitMsg?.classList.add('hidden');
+                hostControls?.classList.remove('hidden');
+                hostTimer?.classList.remove('hidden');
+                guestTimer?.classList.add('hidden');
+                hostMods?.classList.remove('hidden');
             } else {
-                document.getElementById('start-game-btn').classList.add('hidden');
-                document.getElementById('waiting-host-msg').classList.remove('hidden');
-                document.getElementById('host-controls').classList.add('hidden');
-                document.getElementById('host-timer-controls').classList.add('hidden');
-                document.getElementById('guest-timer-msg').classList.remove('hidden');
-                document.getElementById('host-modifiers-box').classList.add('hidden');
+                startBtn?.classList.add('hidden');
+                waitMsg?.classList.remove('hidden');
+                hostControls?.classList.add('hidden');
+                hostTimer?.classList.add('hidden');
+                guestTimer?.classList.remove('hidden');
+                hostMods?.classList.add('hidden');
             }
         }
 
         function setupRoomListener() {
-            if (!db) return;
+            if (!db || !roomCode) return;
             if (unsubscribeRoom) unsubscribeRoom();
 
             unsubscribeRoom = db.collection('rooms').doc(roomCode).onSnapshot((doc) => {
@@ -1168,20 +1227,27 @@
                 const data = doc.data();
 
                 const listEl = document.getElementById('online-players-list');
-                listEl.innerHTML = '';
-                data.players.forEach(p => {
-                    const badge = document.createElement('div');
-                    badge.className = "flex items-center space-x-1.5 bg-white/5 border border-white/5 px-2.5 py-1 rounded-xl text-xs font-medium text-white";
-                    badge.innerHTML = `<span>${p.name}</span>`;
-                    listEl.appendChild(badge);
-                });
-                document.getElementById('online-player-count').textContent = data.players.length;
-                document.getElementById('online-setting-impostors').textContent = data.impostorsCount;
+                if (listEl) {
+                    listEl.innerHTML = '';
+                    (data.players || []).forEach(p => {
+                        const badge = document.createElement('div');
+                        badge.className = "flex items-center space-x-1.5 bg-white/5 border border-white/5 px-2.5 py-1 rounded-xl text-xs font-medium text-white";
+                        badge.innerHTML = `<span>${p.name}</span>`;
+                        listEl.appendChild(badge);
+                    });
+                }
+                const countEl = document.getElementById('online-player-count');
+                if (countEl) countEl.textContent = (data.players || []).length;
+                const settingImp = document.getElementById('online-setting-impostors');
+                if (settingImp) settingImp.textContent = data.impostorsCount || 1;
 
                 if (data.modifiers) {
-                    document.getElementById('online-mod-silent').checked = !!data.modifiers.silent;
-                    document.getElementById('online-mod-chaotic').checked = !!data.modifiers.chaotic;
-                    document.getElementById('online-mod-fakeclue').checked = !!data.modifiers.fakeclue;
+                    const modSilent = document.getElementById('online-mod-silent');
+                    const modChaotic = document.getElementById('online-mod-chaotic');
+                    const modFake = document.getElementById('online-mod-fakeclue');
+                    if (modSilent) modSilent.checked = !!data.modifiers.silent;
+                    if (modChaotic) modChaotic.checked = !!data.modifiers.chaotic;
+                    if (modFake) modFake.checked = !!data.modifiers.fakeclue;
                 }
 
                 if (data.timeLeft !== undefined) {
@@ -1193,7 +1259,8 @@
                     showOnlineReveal(data);
                 } else if (data.status === 'discussion') {
                     goToScreen('screen-discussion');
-                    if (data.luckRule) document.getElementById('luck-dice-text').textContent = data.luckRule;
+                    const diceText = document.getElementById('luck-dice-text');
+                    if (data.luckRule && diceText) diceText.textContent = data.luckRule;
                 } else if (data.status === 'chat') {
                     goToScreen('screen-chat');
                     renderOnlineChat(data);
@@ -1207,6 +1274,7 @@
 
         function renderOnlineChat(data) {
             const container = document.getElementById('chat-messages-container');
+            if (!container) return;
             container.innerHTML = '';
             (data.chatMessages || []).forEach(msg => {
                 const div = document.createElement('div');
@@ -1218,72 +1286,86 @@
         }
 
         async function adjustOnlineImpostors(delta) {
-            if (!isHost || !db) return;
-            const docRef = db.collection('rooms').doc(roomCode);
-            const doc = await docRef.get();
-            if (!doc.exists) return;
-            let data = doc.data();
-            let maxImp = Math.max(1, Math.floor(data.players.length / 2));
-            let newVal = (data.impostorsCount || 1) + delta;
-            if (newVal >= 1 && newVal <= maxImp) {
-                await docRef.update({ impostorsCount: newVal });
-            }
+            if (!isHost || !db || !roomCode) return;
+            try {
+                const docRef = db.collection('rooms').doc(roomCode);
+                const doc = await docRef.get();
+                if (!doc.exists) return;
+                let data = doc.data();
+                let maxImp = Math.max(1, Math.floor((data.players || []).length / 2));
+                let newVal = (data.impostorsCount || 1) + delta;
+                if (newVal >= 1 && newVal <= maxImp) {
+                    await docRef.update({ impostorsCount: newVal });
+                }
+            } catch(e) { console.error(e); }
         }
 
         function showOnlineReveal(data) {
             goToScreen('screen-reveal');
-            const myRole = data.roles[myName];
+            const myRole = data.roles?.[myName];
             if (!myRole) return;
 
             const cardInner = document.getElementById('card-inner');
+            if (!cardInner) return;
             cardInner.style.transition = 'none';
             cardInner.classList.remove('flipped');
             void cardInner.offsetWidth;
             cardInner.style.transition = 'transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1)';
 
-            document.getElementById('reveal-turn-subtitle').textContent = "Il tuo Ruolo";
-            document.getElementById('reveal-player-title').textContent = myName;
-            document.getElementById('card-player-label').textContent = myName;
-            document.getElementById('secret-word-display').textContent = myRole.word;
+            const turnSub = document.getElementById('reveal-turn-subtitle');
+            if (turnSub) turnSub.textContent = "Il tuo Ruolo";
+            const playerTitle = document.getElementById('reveal-player-title');
+            if (playerTitle) playerTitle.textContent = myName;
+            const cardPlayerLabel = document.getElementById('card-player-label');
+            if (cardPlayerLabel) cardPlayerLabel.textContent = myName;
+            const secretWord = document.getElementById('secret-word-display');
+            if (secretWord) secretWord.textContent = myRole.word;
             
             const fakeEl = document.getElementById('fake-clue-display');
-            if (myRole.fakeText) {
+            if (myRole.fakeText && fakeEl) {
                 fakeEl.textContent = myRole.fakeText;
                 fakeEl.classList.remove('hidden');
-            } else {
+            } else if (fakeEl) {
                 fakeEl.classList.add('hidden');
             }
 
-            document.getElementById('modifier-badge-display').textContent = myRole.modText || "";
+            const modBadge = document.getElementById('modifier-badge-display');
+            if (modBadge) modBadge.textContent = myRole.modText || "";
             
             const labelEl = document.getElementById('reveal-card-label');
-            if (gameMode === 'impostore') {
-                if (myRole.isImp) {
-                    labelEl.textContent = "SEI L'IMPOSTORE";
-                    labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-rose-300 px-4 py-1.5 bg-rose-500/20 border border-rose-500/30 rounded-full shadow-md";
-                } else if (myRole.isChaotic) {
-                    labelEl.textContent = "SEI IL CAOTICO";
-                    labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-amber-300 px-4 py-1.5 bg-amber-500/20 border border-amber-500/20 rounded-full shadow-md";
+            if (labelEl) {
+                if (gameMode === 'impostore') {
+                    if (myRole.isImp) {
+                        labelEl.textContent = "SEI L'IMPOSTORE";
+                        labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-rose-300 px-4 py-1.5 bg-rose-500/20 border border-rose-500/30 rounded-full shadow-md";
+                    } else if (myRole.isChaotic) {
+                        labelEl.textContent = "SEI IL CAOTICO";
+                        labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-amber-300 px-4 py-1.5 bg-amber-500/20 border border-amber-500/30 rounded-full shadow-md";
+                    } else {
+                        labelEl.textContent = "SEI UN CIVILE";
+                        labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-emerald-300 px-4 py-1.5 bg-emerald-500/20 border border-emerald-500/20 rounded-full shadow-md";
+                    }
                 } else {
-                    labelEl.textContent = "SEI UN CIVILE";
-                    labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-emerald-300 px-4 py-1.5 bg-emerald-500/20 border border-emerald-500/20 rounded-full shadow-md";
+                    labelEl.textContent = "LA TUA PAROLA SEGRETA";
+                    labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-purple-300 px-4 py-1.5 bg-purple-500/20 border border-purple-500/20 rounded-full shadow-md";
                 }
-            } else {
-                labelEl.textContent = "LA TUA PAROLA SEGRETA";
-                labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-purple-300 px-4 py-1.5 bg-purple-500/20 border border-purple-500/20 rounded-full shadow-md";
             }
         }
 
         async function showOnlineVoting(data) {
             goToScreen('screen-voting');
-            document.getElementById('voting-subtitle').textContent = "Votazione";
-            document.getElementById('voting-title').textContent = "Chi voti?";
-            document.getElementById('voting-desc').textContent = "Scegli chi sospetti di più";
+            const sub = document.getElementById('voting-subtitle');
+            if (sub) sub.textContent = "Votazione";
+            const title = document.getElementById('voting-title');
+            if (title) title.textContent = "Chi voti?";
+            const desc = document.getElementById('voting-desc');
+            if (desc) desc.textContent = "Scegli chi sospetti di più";
 
             const grid = document.getElementById('voting-candidates-grid');
+            if (!grid) return;
             grid.innerHTML = '';
             
-            data.players.forEach(p => {
+            (data.players || []).forEach(p => {
                 if (p.name === myName) return; 
                 const btn = document.createElement('button');
                 btn.className = "p-3.5 bg-white/5 hover:bg-white/15 rounded-xl text-xs font-semibold text-white transition-all text-center border border-white/5";
@@ -1294,34 +1376,41 @@
         }
 
         async function castOnlineVote(targetName, data) {
-            if (!db) return;
-            const docRef = db.collection('rooms').doc(roomCode);
-            const doc = await docRef.get();
-            let votes = doc.data().votes || {};
-            votes[myName] = targetName;
+            if (!db || !roomCode) return;
+            try {
+                const docRef = db.collection('rooms').doc(roomCode);
+                const doc = await docRef.get();
+                if (!doc.exists) return;
+                let votes = doc.data().votes || {};
+                votes[myName] = targetName;
 
-            let updateData = { votes: votes };
-            if (Object.keys(votes).length >= data.players.length && isHost) {
-                updateData.status = 'results';
-            }
-            await docRef.update(updateData);
+                let updateData = { votes: votes };
+                if (Object.keys(votes).length >= (data.players || []).length && isHost) {
+                    updateData.status = 'results';
+                }
+                await docRef.update(updateData);
+            } catch(e) { console.error(e); }
         }
 
         function showOnlineResults(data) {
             goToScreen('screen-results');
-            document.getElementById('result-civil-word').textContent = data.civilWord;
+            const civilWordEl = document.getElementById('result-civil-word');
+            if (civilWordEl) civilWordEl.textContent = data.civilWord;
 
             let impostors = [];
-            for (let name in data.roles) {
+            for (let name in (data.roles || {})) {
                 if (data.roles[name].isImp) impostors.push(name);
             }
-            document.getElementById('final-impostors-display').textContent = impostors.join(", ");
+            const impDisplay = document.getElementById('final-impostors-display');
+            if (impDisplay) impDisplay.textContent = impostors.join(", ");
 
-            if (data.chaoticPlayer) {
-                document.getElementById('result-chaotic-box').classList.remove('hidden');
-                document.getElementById('final-chaotic-display').textContent = data.chaoticPlayer;
-            } else {
-                document.getElementById('result-chaotic-box').classList.add('hidden');
+            const chaoticBox = document.getElementById('result-chaotic-box');
+            const chaoticDisplay = document.getElementById('final-chaotic-display');
+            if (data.chaoticPlayer && chaoticBox && chaoticDisplay) {
+                chaoticBox.classList.remove('hidden');
+                chaoticDisplay.textContent = data.chaoticPlayer;
+            } else if (chaoticBox) {
+                chaoticBox.classList.add('hidden');
             }
 
             let voteCounts = {};
@@ -1329,19 +1418,22 @@
                 voteCounts[target] = (voteCounts[target] || 0) + 1;
             });
 
-            let winCheck = checkWinConditionAdvanced(impostors, voteCounts, data.players.length, data.chaoticPlayer);
+            let winCheck = checkWinConditionAdvanced(impostors, voteCounts, (data.players || []).length, data.chaoticPlayer);
 
             const badge = document.getElementById('winner-text');
             const container = document.getElementById('winner-badge');
 
-            badge.textContent = winCheck.message;
-            if (winCheck.success) {
-                container.className = "inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-extrabold uppercase tracking-wider shadow-md";
-            } else {
-                container.className = "inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs font-extrabold uppercase tracking-wider shadow-md";
+            if (badge) badge.textContent = winCheck.message;
+            if (container) {
+                if (winCheck.success) {
+                    container.className = "inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-extrabold uppercase tracking-wider shadow-md";
+                } else {
+                    container.className = "inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs font-extrabold uppercase tracking-wider shadow-md";
+                }
             }
 
             const breakdown = document.getElementById('votes-breakdown-list');
+            if (!breakdown) return;
             breakdown.innerHTML = '';
             for (let voter in (data.votes || {})) {
                 let votedFor = data.votes[voter];
@@ -1355,30 +1447,37 @@
         async function toggleTimer() {
             if (playType === 'online' && !isHost) return;
 
+            const btnText = document.getElementById('timer-btn-text');
+            const timerIcon = document.getElementById('timer-icon');
+
             if (isTimerRunning) {
                 clearInterval(timerInterval);
                 isTimerRunning = false;
-                document.getElementById('timer-btn-text').textContent = "Riprendi";
-                document.getElementById('timer-icon').className = "fa-solid fa-play text-purple-400";
-                if (playType === 'online' && db) await db.collection('rooms').doc(roomCode).update({ timerRunning: false });
+                if (btnText) btnText.textContent = "Riprendi";
+                if (timerIcon) timerIcon.className = "fa-solid fa-play text-purple-400";
+                if (playType === 'online' && db && roomCode) {
+                    await db.collection('rooms').doc(roomCode).update({ timerRunning: false }).catch(e => console.error(e));
+                }
             } else {
                 isTimerRunning = true;
-                document.getElementById('timer-btn-text').textContent = "Pausa";
-                document.getElementById('timer-icon').className = "fa-solid fa-pause text-purple-400";
-                if (playType === 'online' && db) await db.collection('rooms').doc(roomCode).update({ timerRunning: true });
+                if (btnText) btnText.textContent = "Pausa";
+                if (timerIcon) timerIcon.className = "fa-solid fa-pause text-purple-400";
+                if (playType === 'online' && db && roomCode) {
+                    await db.collection('rooms').doc(roomCode).update({ timerRunning: true }).catch(e => console.error(e));
+                }
                 
                 timerInterval = setInterval(async () => {
                     if (timeLeft > 0) {
                         timeLeft--;
                         updateTimerDisplay();
-                        if (playType === 'online' && isHost && db) {
-                            await db.collection('rooms').doc(roomCode).update({ timeLeft: timeLeft });
+                        if (playType === 'online' && isHost && db && roomCode) {
+                            await db.collection('rooms').doc(roomCode).update({ timeLeft: timeLeft }).catch(e => console.error(e));
                         }
                     } else {
                         clearInterval(timerInterval);
                         isTimerRunning = false;
-                        if (playType === 'online' && isHost && db) {
-                            await db.collection('rooms').doc(roomCode).update({ timerRunning: false, status: 'chat' });
+                        if (playType === 'online' && isHost && db && roomCode) {
+                            await db.collection('rooms').doc(roomCode).update({ timerRunning: false, status: 'chat' }).catch(e => console.error(e));
                         } else if (playType === 'local') {
                             goToChatPhase();
                         }
@@ -1393,21 +1492,30 @@
             isTimerRunning = false;
             timeLeft = 120;
             updateTimerDisplay();
-            document.getElementById('timer-btn-text').textContent = "Avvia Timer";
-            document.getElementById('timer-icon').className = "fa-solid fa-play text-purple-400";
-            if (playType === 'online' && db) {
-                await db.collection('rooms').doc(roomCode).update({ timerRunning: false, timeLeft: 120 });
+            const btnText = document.getElementById('timer-btn-text');
+            const timerIcon = document.getElementById('timer-icon');
+            if (btnText) btnText.textContent = "Avvia Timer";
+            if (timerIcon) timerIcon.className = "fa-solid fa-play text-purple-400";
+            if (playType === 'online' && db && roomCode) {
+                await db.collection('rooms').doc(roomCode).update({ timerRunning: false, timeLeft: 120 }).catch(e => console.error(e));
             }
         }
 
         function updateTimerDisplay() {
             let m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
             let s = (timeLeft % 60).toString().padStart(2, '0');
-            document.getElementById('timer-display').textContent = `${m}:${s}`;
+            const display = document.getElementById('timer-display');
+            if (display) display.textContent = `${m}:${s}`;
         }
 
-        function openRulesModal() { document.getElementById('modal-rules').classList.remove('hidden'); }
-        function closeRulesModal() { document.getElementById('modal-rules').classList.add('hidden'); }
+        function openRulesModal() {
+            const modal = document.getElementById('modal-rules');
+            if (modal) modal.classList.remove('hidden');
+        }
+        function closeRulesModal() {
+            const modal = document.getElementById('modal-rules');
+            if (modal) modal.classList.add('hidden');
+        }
     </script>
 </body>
 </html>
