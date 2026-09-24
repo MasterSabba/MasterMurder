@@ -9,7 +9,7 @@
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -41,15 +41,16 @@
             color: #f8fafc;
         }
         .minimal-card {
-            background: rgba(28, 28, 36, 0.7);
-            backdrop-filter: blur(20px);
+            background: rgba(28, 28, 36, 0.75);
+            backdrop-filter: blur(25px);
             border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
         }
         .card-flip {
             perspective: 1200px;
         }
         .card-inner {
-            transition: transform 0.5s cubic-bezier(0.4, 0.2, 0.2, 1);
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
             transform-style: preserve-3d;
         }
         .card-inner.flipped {
@@ -60,6 +61,13 @@
         }
         .card-back {
             transform: rotateY(180deg);
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 15px rgba(168, 85, 247, 0.2); }
+            50% { box-shadow: 0 0 30px rgba(168, 85, 247, 0.5); }
+        }
+        .glow-effect {
+            animation: pulse-glow 3s infinite;
         }
         ::-webkit-scrollbar {
             width: 4px;
@@ -80,11 +88,11 @@
 
     <header class="w-full py-4 px-6 border-b border-white/5 flex justify-between items-center sticky top-0 z-40 bg-[#0a0a0c]/80 backdrop-blur-md">
         <div class="flex items-center space-x-3 cursor-pointer pl-6 sm:pl-0" onclick="goToScreen('screen-mode')">
-            <div class="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+            <div class="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center glow-effect">
                 <i class="fa-solid fa-masks-theater text-purple-400 text-sm"></i>
             </div>
             <div>
-                <h1 id="header-title" class="font-bold text-sm tracking-widest uppercase text-white">Master Murder</h1>
+                <h1 id="header-title" class="font-extrabold text-sm tracking-widest uppercase text-white">Master Murder</h1>
             </div>
         </div>
         <div class="flex items-center space-x-3">
@@ -102,8 +110,8 @@
         <!-- 0. SELETTORE MODALITÀ -->
         <div id="screen-mode" class="w-full space-y-6">
             <div class="text-center space-y-1.5">
-                <h2 class="text-2xl sm:text-3xl font-bold tracking-tight">Scegli la Modalità</h2>
-                <p class="text-slate-400 text-sm">Come vuoi giocare?</p>
+                <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Scegli la Modalità</h2>
+                <p class="text-slate-400 text-sm">Come vuoi impostare la partita?</p>
             </div>
 
             <div class="grid grid-cols-1 gap-4">
@@ -133,7 +141,7 @@
         <div id="screen-setup-type" class="w-full space-y-6 hidden">
             <div class="text-center space-y-1.5">
                 <h2 id="setup-type-title" class="text-2xl font-bold tracking-tight">Tipo di Partita</h2>
-                <p class="text-slate-400 text-sm">Giocare insieme sullo stesso schermo o su più dispositivi?</p>
+                <p class="text-slate-400 text-sm">Stesso schermo o dispositivi multipli?</p>
             </div>
 
             <div class="grid grid-cols-1 gap-4">
@@ -143,7 +151,7 @@
                     </div>
                     <div>
                         <h3 class="font-bold text-white text-base">Stesso Dispositivo (Pass & Play)</h3>
-                        <p class="text-xs text-slate-400 mt-0.5">Inserite i nomi qui e passatevi il telefono a turno.</p>
+                        <p class="text-xs text-slate-400 mt-0.5">Inserite i nomi e passatevi il telefono.</p>
                     </div>
                 </button>
 
@@ -164,38 +172,60 @@
         </div>
 
         <!-- 1A. SETUP STESSO DISPOSITIVO -->
-        <div id="screen-setup-local" class="w-full space-y-6 hidden">
-            <div class="text-center space-y-1.5">
+        <div id="screen-setup-local" class="w-full space-y-5 hidden">
+            <div class="text-center space-y-1">
                 <h2 class="text-2xl font-bold tracking-tight">Giocatori Locali</h2>
-                <p class="text-slate-400 text-sm">Aggiungi i partecipanti che sono qui con te.</p>
+                <p class="text-slate-400 text-xs">Aggiungi i partecipanti e attiva i ruoli speciali.</p>
             </div>
 
-            <div class="minimal-card p-5 rounded-2xl space-y-4">
-                <div class="flex justify-between items-center">
-                    <span class="text-xs uppercase tracking-wider font-semibold text-slate-400">Partecipanti (<span id="local-player-count">0</span>)</span>
-                    <span class="text-[11px] text-slate-500">Min. 3 giocatori</span>
+            <div class="minimal-card p-4 rounded-2xl space-y-3">
+                <div class="flex justify-between items-center text-xs">
+                    <span class="uppercase tracking-wider font-semibold text-slate-400">Partecipanti (<span id="local-player-count">0</span>)</span>
+                    <span class="text-slate-500">Min. 3 giocatori</span>
                 </div>
 
                 <div class="flex space-x-2">
                     <input type="text" id="local-player-input" placeholder="Nome giocatore..." maxlength="12"
-                        class="flex-1 bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-500 text-white placeholder-slate-600">
-                    <button onclick="addLocalPlayer()" class="bg-white hover:bg-slate-200 text-dark-900 px-5 py-3 rounded-xl font-semibold text-sm transition-all">
+                        class="flex-1 bg-dark-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-purple-500 text-white placeholder-slate-600">
+                    <button onclick="addLocalPlayer()" class="bg-white hover:bg-slate-200 text-dark-900 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all">
                         <i class="fa-solid fa-plus"></i>
                     </button>
                 </div>
 
-                <div id="local-players-list" class="flex flex-wrap gap-2 max-h-36 overflow-y-auto pr-1"></div>
+                <div id="local-players-list" class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pr-1"></div>
 
                 <div class="pt-2 border-t border-white/5 flex justify-between items-center">
                     <div>
                         <div class="text-xs font-medium">Impostori</div>
-                        <div class="text-[10px] text-slate-500">Numero di infiltrati</div>
+                        <div class="text-[10px] text-slate-500">Numero infiltrati</div>
                     </div>
                     <div class="flex items-center space-x-3">
                         <button onclick="adjustLocalImpostors(-1)" class="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs">-</button>
                         <span id="local-setting-impostors" class="font-bold w-4 text-center text-xs">1</span>
                         <button onclick="adjustLocalImpostors(1)" class="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-xs">+</button>
                     </div>
+                </div>
+            </div>
+
+            <!-- MODIFICATORI E RUOLI SCELTI -->
+            <div class="minimal-card p-4 rounded-2xl space-y-2.5">
+                <div class="text-[11px] uppercase tracking-wider font-bold text-purple-400 flex items-center space-x-1.5">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Ruoli e Modificatori Speciali</span>
+                </div>
+                <div class="grid grid-cols-1 gap-2">
+                    <label class="flex items-center space-x-2 bg-dark-900/60 p-2.5 rounded-xl border border-white/5 cursor-pointer text-xs">
+                        <input type="checkbox" id="mod-silent" class="accent-purple-500 w-4 h-4">
+                        <span class="text-slate-300"><strong>Il Silenzioso:</strong> 1 giocatore può inviare solo 1 messaggio in chat.</span>
+                    </label>
+                    <label class="flex items-center space-x-2 bg-dark-900/60 p-2.5 rounded-xl border border-white/5 cursor-pointer text-xs">
+                        <input type="checkbox" id="mod-chaotic" class="accent-purple-500 w-4 h-4">
+                        <span class="text-slate-300"><strong>Il Caotico:</strong> Ha una parola propria e vince se viene eliminato!</span>
+                    </label>
+                    <label class="flex items-center space-x-2 bg-dark-900/60 p-2.5 rounded-xl border border-white/5 cursor-pointer text-xs">
+                        <input type="checkbox" id="mod-fakeclue" class="accent-purple-500 w-4 h-4">
+                        <span class="text-slate-300"><strong>Indizio Doppio:</strong> L'impostore riceve un indizio tra "o questa o questa".</span>
+                    </label>
                 </div>
             </div>
 
@@ -210,21 +240,21 @@
         </div>
 
         <!-- 1B. SETUP ONLINE -->
-        <div id="screen-setup-online" class="w-full space-y-6 hidden">
-            <div class="text-center space-y-1.5">
+        <div id="screen-setup-online" class="w-full space-y-5 hidden">
+            <div class="text-center space-y-1">
                 <h2 class="text-2xl font-bold tracking-tight">Stanza Online</h2>
-                <p class="text-slate-400 text-sm">Crea una nuova stanza o unisciti con il codice.</p>
+                <p class="text-slate-400 text-xs">Crea una stanza o unisciti con il codice.</p>
             </div>
 
             <div class="space-y-4">
-                <div class="minimal-card p-5 rounded-2xl space-y-4">
-                    <div class="space-y-2">
+                <div class="minimal-card p-4 rounded-2xl space-y-3">
+                    <div class="space-y-1">
                         <label class="text-[11px] uppercase tracking-wider font-semibold text-slate-400">Il tuo Nome</label>
                         <input type="text" id="my-name-input" placeholder="Es. Mario" maxlength="12"
-                            class="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-purple-500 text-white placeholder-slate-600">
+                            class="w-full bg-dark-900 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-purple-500 text-white placeholder-slate-600">
                     </div>
 
-                    <div class="grid grid-cols-2 gap-3 pt-2">
+                    <div class="grid grid-cols-2 gap-3 pt-1">
                         <button onclick="createRoom()" class="py-3 bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-purple-600/20 transition-all">
                             Crea Stanza
                         </button>
@@ -234,13 +264,32 @@
                     </div>
                 </div>
 
-                <div id="room-lobby-box" class="minimal-card p-5 rounded-2xl space-y-4 hidden">
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs uppercase tracking-wider font-semibold text-slate-400">Giocatori (<span id="online-player-count">0</span>)</span>
-                        <span class="text-[11px] text-purple-400 font-mono" id="lobby-room-code"></span>
+                <div id="room-lobby-box" class="minimal-card p-4 rounded-2xl space-y-3 hidden">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="uppercase tracking-wider font-semibold text-slate-400">Giocatori (<span id="online-player-count">0</span>)</span>
+                        <span class="text-purple-400 font-mono font-bold" id="lobby-room-code"></span>
                     </div>
 
-                    <div id="online-players-list" class="flex flex-wrap gap-2 max-h-36 overflow-y-auto pr-1"></div>
+                    <div id="online-players-list" class="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1"></div>
+
+                    <!-- MODIFICATORI ONLINE (HOST) -->
+                    <div id="host-modifiers-box" class="pt-2 border-t border-white/5 space-y-2">
+                        <div class="text-[10px] uppercase tracking-wider font-bold text-purple-400">Ruoli Speciali Stanza</div>
+                        <div class="grid grid-cols-1 gap-2">
+                            <label class="flex items-center space-x-2 bg-dark-900/60 p-2 rounded-xl border border-white/5 cursor-pointer text-[11px]">
+                                <input type="checkbox" id="online-mod-silent" class="accent-purple-500 w-3.5 h-3.5" onchange="updateOnlineModifiers()">
+                                <span class="text-slate-300">Il Silenzioso (1 solo messaggio in chat)</span>
+                            </label>
+                            <label class="flex items-center space-x-2 bg-dark-900/60 p-2 rounded-xl border border-white/5 cursor-pointer text-[11px]">
+                                <input type="checkbox" id="online-mod-chaotic" class="accent-purple-500 w-3.5 h-3.5" onchange="updateOnlineModifiers()">
+                                <span class="text-slate-300">Il Caotico (Parola propria, vince se eliminato)</span>
+                            </label>
+                            <label class="flex items-center space-x-2 bg-dark-900/60 p-2 rounded-xl border border-white/5 cursor-pointer text-[11px]">
+                                <input type="checkbox" id="online-mod-fakeclue" class="accent-purple-500 w-3.5 h-3.5" onchange="updateOnlineModifiers()">
+                                <span class="text-slate-300">Indizio Doppio ("o questa o questa")</span>
+                            </label>
+                        </div>
+                    </div>
 
                     <div id="host-controls" class="pt-2 border-t border-white/5 flex justify-between items-center">
                         <div>
@@ -254,7 +303,7 @@
                         </div>
                     </div>
 
-                    <button id="start-game-btn" onclick="startOnlineMatch()" class="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-purple-600/20 transition-all hidden">
+                    <button id="start-game-btn" onclick="startOnlineMatch()" class="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold rounded-xl text-xs shadow-lg shadow-purple-600/20 transition-all hidden">
                         Avvia Partita per Tutti
                     </button>
                     <div id="waiting-host-msg" class="text-center text-xs text-slate-400 py-2 hidden">
@@ -268,7 +317,7 @@
             </div>
         </div>
 
-        <!-- 2. ROLE REVEAL SCREEN (SCRITTE GRANDI E COLORATE VERDI/ROSSE) -->
+        <!-- 2. ROLE REVEAL SCREEN -->
         <div id="screen-reveal" class="w-full max-w-sm hidden flex flex-col items-center space-y-6">
             <div class="text-center space-y-1">
                 <span id="reveal-turn-subtitle" class="text-[11px] tracking-widest uppercase font-semibold text-purple-400">Passa il dispositivo</span>
@@ -278,7 +327,6 @@
 
             <div class="w-full h-80 card-flip cursor-pointer" onclick="toggleCardFlip()">
                 <div id="card-inner" class="card-inner w-full h-full relative rounded-3xl shadow-2xl">
-                    <!-- Front -->
                     <div class="card-front absolute inset-0 minimal-card rounded-3xl p-6 flex flex-col items-center justify-center space-y-4 border border-white/10">
                         <div class="w-20 h-20 rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
                             <i class="fa-solid fa-fingerprint text-3xl"></i>
@@ -288,13 +336,14 @@
                             <p class="text-sm text-slate-300 mt-1">Scopri la tua parola in segreto</p>
                         </div>
                     </div>
-                    <!-- Back -->
-                    <div class="card-back absolute inset-0 minimal-card rounded-3xl p-6 flex flex-col items-center justify-center space-y-5 border border-white/20 bg-gradient-to-b from-dark-800 to-dark-900">
-                        <span id="reveal-card-label" class="text-sm tracking-widest uppercase font-extrabold px-4 py-1.5 rounded-full shadow-md">Segreto</span>
-                        <div id="secret-word-display" class="text-4xl font-black tracking-wide text-center px-4 py-5 bg-white/10 border border-white/20 rounded-2xl w-full shadow-inner text-white">
+                    <div class="card-back absolute inset-0 minimal-card rounded-3xl p-6 flex flex-col items-center justify-center space-y-4 border border-white/20 bg-gradient-to-b from-dark-800 to-dark-900">
+                        <span id="reveal-card-label" class="text-xs tracking-widest uppercase font-extrabold px-4 py-1.5 rounded-full shadow-md">Segreto</span>
+                        <div id="secret-word-display" class="text-3xl font-black tracking-wide text-center px-4 py-4 bg-white/10 border border-white/20 rounded-2xl w-full shadow-inner text-white">
                             -
                         </div>
-                        <button onclick="event.stopPropagation(); finishRevealStep();" class="mt-2 w-full py-3.5 bg-white text-dark-900 hover:bg-slate-200 text-sm font-extrabold rounded-xl transition-all shadow-lg">
+                        <div id="fake-clue-display" class="text-xs text-amber-300 font-semibold text-center hidden bg-amber-500/10 p-2 rounded-xl border border-amber-500/20 w-full"></div>
+                        <div id="modifier-badge-display" class="text-[11px] font-semibold text-purple-300 text-center px-2"></div>
+                        <button onclick="event.stopPropagation(); finishRevealStep();" class="w-full py-3 bg-white text-dark-900 hover:bg-slate-200 text-xs font-extrabold rounded-xl transition-all shadow-lg">
                             Ho visto la parola <i class="fa-solid fa-check ml-1"></i>
                         </button>
                     </div>
@@ -302,20 +351,31 @@
             </div>
         </div>
 
-        <!-- 3. DISCUSSION SCREEN -->
-        <div id="screen-discussion" class="w-full max-w-md hidden flex flex-col items-center space-y-6">
+        <!-- 3. DISCUSSION SCREEN (CON DADO DELLA SFORTUNA) -->
+        <div id="screen-discussion" class="w-full max-w-md hidden flex flex-col items-center space-y-5">
             <div class="text-center space-y-1">
-                <span class="text-[11px] tracking-widest uppercase font-semibold text-indigo-400">Discussione</span>
+                <span class="text-[11px] tracking-widest uppercase font-semibold text-indigo-400">Discussione e Dibattito</span>
                 <h2 class="text-2xl font-bold">Parlate a Turno</h2>
                 <p class="text-slate-400 text-xs">Ciascuno dice una parola collegata. Smascherate l'impostore.</p>
             </div>
 
-            <div class="minimal-card w-full p-8 rounded-3xl flex flex-col items-center space-y-6">
-                <div class="w-32 h-32 rounded-full border border-white/10 flex items-center justify-center bg-dark-900/50">
+            <!-- IL DADO DELLA SFORTUNA -->
+            <div id="luck-dice-banner" class="w-full bg-purple-600/10 border border-purple-500/30 p-3.5 rounded-2xl flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400 flex-shrink-0 text-base">
+                    <i class="fa-solid fa-dice"></i>
+                </div>
+                <div>
+                    <div class="text-[10px] uppercase font-bold text-purple-400 tracking-wider">Il Dado della Sfortuna</div>
+                    <div id="luck-dice-text" class="text-xs font-semibold text-white mt-0.5">Caricamento regola...</div>
+                </div>
+            </div>
+
+            <div class="minimal-card w-full p-6 rounded-3xl flex flex-col items-center space-y-5">
+                <div class="w-28 h-28 rounded-full border border-white/10 flex items-center justify-center bg-dark-900/50">
                     <div id="timer-display" class="text-3xl font-bold tracking-tight text-white">02:00</div>
                 </div>
 
-                <div class="flex items-center space-x-3 w-full">
+                <div id="host-timer-controls" class="flex items-center space-x-3 w-full">
                     <button onclick="toggleTimer()" id="timer-toggle-btn" class="flex-1 py-3 bg-white/10 hover:bg-white/15 text-white font-semibold text-xs rounded-xl transition-all flex items-center justify-center space-x-2">
                         <i id="timer-icon" class="fa-solid fa-play text-purple-400"></i>
                         <span id="timer-btn-text">Avvia Timer</span>
@@ -324,10 +384,40 @@
                         <i class="fa-solid fa-rotate-right"></i>
                     </button>
                 </div>
+                <div id="guest-timer-msg" class="text-center text-xs text-slate-400 hidden">
+                    In attesa che l'operatore gestisca il timer...
+                </div>
 
-                <button onclick="goToVotingPhase()" class="w-full py-3.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-rose-600/20 transition-all flex items-center justify-center space-x-2">
-                    <i class="fa-solid fa-gavel text-xs"></i>
-                    <span>Procedi al Voto</span>
+                <button onclick="goToChatPhase()" class="w-full py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-purple-600/20 transition-all flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-comments text-xs"></i>
+                    <span>Vai alla Fase di Chat Libera</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 3B. FASE DI CHAT LIBERA -->
+        <div id="screen-chat" class="w-full max-w-md hidden flex flex-col space-y-4">
+            <div class="text-center space-y-1">
+                <span class="text-[11px] tracking-widest uppercase font-semibold text-purple-400">Chat Libera</span>
+                <h2 class="text-2xl font-bold">Scrivete liberamente</h2>
+                <p id="chat-role-warning" class="text-slate-400 text-xs">Tutti possono scrivere in qualsiasi momento</p>
+            </div>
+
+            <div class="minimal-card w-full p-4 rounded-3xl flex flex-col space-y-3">
+                <div id="chat-messages-container" class="h-64 overflow-y-auto space-y-2 pr-1 flex flex-col bg-dark-900/60 p-3 rounded-2xl border border-white/5">
+                    <!-- Messaggi dinamici -->
+                </div>
+
+                <div class="flex space-x-2">
+                    <input type="text" id="chat-input-msg" placeholder="Scrivi un messaggio o una parola..." maxlength="100"
+                        class="flex-1 bg-dark-900 border border-white/10 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-purple-500 text-white placeholder-slate-600">
+                    <button onclick="sendChatMessage()" id="chat-send-btn" class="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2.5 rounded-xl font-bold text-xs transition-all">
+                        Invia
+                    </button>
+                </div>
+
+                <button onclick="proceedToVotingFromChat()" class="w-full py-3 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-rose-600/20 transition-all mt-2">
+                    Procedi alle Votazioni <i class="fa-solid fa-arrow-right ml-1"></i>
                 </button>
             </div>
         </div>
@@ -335,7 +425,7 @@
         <!-- 4. VOTING SCREEN -->
         <div id="screen-voting" class="w-full max-w-md hidden flex flex-col items-center space-y-6">
             <div class="text-center space-y-1">
-                <span id="voting-subtitle" class="text-[11px] tracking-widest uppercase font-semibold text-rose-400">Votazione Segreta</span>
+                <span id="voting-subtitle" class="text-[11px] tracking-widest uppercase font-semibold text-rose-400">Votazione</span>
                 <h2 id="voting-title" class="text-2xl font-bold">Chi voti?</h2>
                 <p id="voting-desc" class="text-slate-400 text-xs">Scegli chi sospetti di più</p>
             </div>
@@ -354,7 +444,6 @@
                 </div>
             </div>
 
-            <!-- Card Dettagli Segreti -->
             <div class="minimal-card w-full p-4 rounded-2xl space-y-3">
                 <div class="text-[11px] uppercase tracking-wider font-bold text-slate-400 flex items-center space-x-2">
                     <i class="fa-solid fa-key text-purple-400"></i>
@@ -370,9 +459,12 @@
                         <div id="final-impostors-display" class="text-base font-extrabold text-rose-300 mt-1">-</div>
                     </div>
                 </div>
+                <div id="result-chaotic-box" class="bg-dark-900/90 p-3.5 rounded-xl border border-white/5 hidden">
+                    <div class="text-[10px] text-amber-400 uppercase font-semibold tracking-wider">Il Caotico era:</div>
+                    <div id="final-chaotic-display" class="text-sm font-bold text-amber-300 mt-0.5">-</div>
+                </div>
             </div>
 
-            <!-- Tabella Dettaglio Voti -->
             <div class="minimal-card w-full p-4 rounded-2xl space-y-3">
                 <div class="flex items-center space-x-2 text-xs uppercase tracking-wider font-semibold text-slate-300">
                     <i class="fa-solid fa-list-check text-purple-400"></i>
@@ -417,14 +509,16 @@
     <div id="modal-rules" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
         <div class="minimal-card max-w-sm w-full p-6 rounded-3xl space-y-4 border border-white/10">
             <div class="flex justify-between items-center">
-                <h3 class="font-bold text-base">Regole del Gioco</h3>
+                <h3 class="font-bold text-base">Regole & Ruoli Speciali</h3>
                 <button onclick="closeRulesModal()" class="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 text-xs">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
             <div class="space-y-2.5 text-xs text-slate-300 leading-relaxed">
-                <p><strong>L'Impostore:</strong> I civili hanno la stessa parola, l'impostore riceve solo un indizio collegato.</p>
-                <p><strong>Undercover:</strong> Tutti ricevono una parola segreta unica, l'impostore non sa chi è.</p>
+                <p><strong>Il Silenzioso:</strong> Può inviare un solo messaggio nella chat libera.</p>
+                <p><strong>Il Caotico:</strong> Ha una sua parola segreta e vince se viene eliminato dal gruppo!</p>
+                <p><strong>Indizio Doppio:</strong> L'impostore riceve un indizio tra "o questa o questa".</p>
+                <p><strong>Dado della Sfortuna:</strong> Vincoli divertenti per la discussione.</p>
             </div>
             <button onclick="closeRulesModal()" class="w-full py-2.5 bg-white text-dark-900 hover:bg-slate-200 font-bold text-xs rounded-xl">Ho capito</button>
         </div>
@@ -433,34 +527,37 @@
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyBxZQF5OO5-znaipaPYeFcjOARjFXO1_gc",
-  authDomain: "mastersabba-games.firebaseapp.com",
-  databaseURL: "https://mastersabba-games-default-rtdb.firebaseio.com",
-  projectId: "mastersabba-games",
-  storageBucket: "mastersabba-games.firebasestorage.app",
-  messagingSenderId: "254141019232",
-  appId: "1:254141019232:web:29702c03b91f8a76677f05",
-  measurementId: "G-775DFWZ6PC"
+            authDomain: "mastersabba-games.firebaseapp.com",
+            databaseURL: "https://mastersabba-games-default-rtdb.firebaseio.com",
+            projectId: "mastersabba-games",
+            storageBucket: "mastersabba-games.firebasestorage.app",
+            messagingSenderId: "254141019232",
+            appId: "1:254141019232:web:29702c03b91f8a76677f05",
+            measurementId: "G-775DFWZ6PC"
         };
         
         let db = null;
         try {
-            if (!firebase.apps.length) { 
-                firebase.initializeApp(firebaseConfig); 
-            }
+            if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
             db = firebase.firestore();
             db.enablePersistence({synchronizeTabs: true}).catch(() => {});
-        } catch(e) { 
-            console.warn("Firestore offline mode fallback"); 
-        }
+        } catch(e) { console.warn("Firestore offline mode fallback"); }
 
         const wordPairs = [
-            { civil: "Pizza", impostor: "Italia" }, { civil: "Sushi", impostor: "Giappone" }, { civil: "Hamburger", impostor: "Fastfood" },
-            { civil: "Lasagna", impostor: "Pasta" }, { civil: "Gelato", impostor: "Freddo" }, { civil: "Caffè", impostor: "Energia" },
-            { civil: "Kebab", impostor: "Carne" }, { civil: "Carbonara", impostor: "Uovo" }, { civil: "Tiramisù", impostor: "Dolce" },
-            { civil: "Panda", impostor: "Bambù" }, { civil: "Squalo", impostor: "Mare" }, { civil: "Leone", impostor: "Savana" },
-            { civil: "Smartphone", impostor: "Tecnologia" }, { civil: "Ombrello", impostor: "Pioggia" }, { civil: "Orologio", impostor: "Tempo" },
-            { civil: "Harry Potter", impostor: "Mago" }, { civil: "Spiderman", impostor: "Ragnatela" }, { civil: "Batman", impostor: "Pipistrello" },
-            { civil: "Venezia", impostor: "Canali" }, { civil: "Parigi", impostor: "Francia" }, { civil: "Colosseo", impostor: "Roma" }
+            { civil: "Pizza", impostor: "Italia", fake: "Napoli" }, { civil: "Sushi", impostor: "Giappone", fake: "Riso" }, { civil: "Hamburger", impostor: "Fastfood", fake: "Panino" },
+            { civil: "Lasagna", impostor: "Pasta", fake: "Forno" }, { civil: "Gelato", impostor: "Freddo", fake: "Estate" }, { civil: "Caffè", impostor: "Energia", fake: "Tazza" },
+            { civil: "Kebab", impostor: "Carne", fake: "Salsa" }, { civil: "Carbonara", impostor: "Uovo", fake: "Pepe" }, { civil: "Tiramisù", impostor: "Dolce", fake: "Cacao" },
+            { civil: "Panda", impostor: "Bambù", fake: "Cina" }, { civil: "Squalo", impostor: "Mare", fake: "Denti" }, { civil: "Leone", impostor: "Savana", fake: "Coda" },
+            { civil: "Smartphone", impostor: "Tecnologia", fake: "Schermo" }, { civil: "Ombrello", impostor: "Pioggia", fake: "Acqua" }, { civil: "Orologio", impostor: "Tempo", fake: "Lancette" },
+            { civil: "Harry Potter", impostor: "Mago", fake: "Bacchetta" }, { civil: "Spiderman", impostor: "Ragnatela", fake: "Grattacielo" }, { civil: "Batman", impostor: "Pipistrello", fake: "Notte" }
+        ];
+
+        const luckDiceOptions = [
+            "Tutti devono parlare usando esclusivamente frasi affermative!",
+            "Chi parla per primo nel giro deve fare una smorfia divertente.",
+            "Vietato gesticolare con le mani durante la discussione!",
+            "Tutti i giocatori devono iniziare ogni frase con la parola 'Assolutamente...'",
+            "È obbligatorio indicare una persona diversa a ogni intervento verbale."
         ];
 
         let gameMode = 'impostore'; 
@@ -468,13 +565,20 @@
 
         let localPlayers = [];
         let localImpostorsCount = 1;
+        let activeModifiers = { silent: false, chaotic: false, fakeclue: false };
+
         let localGame = {
             revealIndex: 0,
             assignedRoles: [],
             civilWord: "",
             impostorWord: "",
+            chaoticPlayer: "",
+            silentPlayer: "",
             votingIndex: 0,
-            votes: {}
+            votes: {},
+            currentDiceRule: "",
+            chatMessages: [],
+            localMessagesSent: {} // traccia i messaggi inviati dal Silenzioso in locale
         };
 
         let roomCode = null;
@@ -486,9 +590,7 @@
 
         window.onload = function() {
             const savedName = localStorage.getItem('mm_username');
-            if (savedName) {
-                document.getElementById('my-name-input').value = savedName;
-            }
+            if (savedName) document.getElementById('my-name-input').value = savedName;
             renderLocalPlayersList();
             setupLocalInputListener();
         };
@@ -503,6 +605,8 @@
 
         function initLocalGameSetup() {
             playType = 'local';
+            document.getElementById('host-timer-controls').classList.remove('hidden');
+            document.getElementById('guest-timer-msg').classList.add('hidden');
             goToScreen('screen-setup-local');
         }
 
@@ -512,7 +616,7 @@
         }
 
         function goToScreen(screenId) {
-            ['screen-mode', 'screen-setup-type', 'screen-setup-local', 'screen-setup-online', 'screen-reveal', 'screen-discussion', 'screen-voting', 'screen-results'].forEach(id => {
+            ['screen-mode', 'screen-setup-type', 'screen-setup-local', 'screen-setup-online', 'screen-reveal', 'screen-discussion', 'screen-chat', 'screen-voting', 'screen-results'].forEach(id => {
                 document.getElementById(id).classList.add('hidden');
             });
             document.getElementById(screenId).classList.remove('hidden');
@@ -531,11 +635,8 @@
             listEl.innerHTML = '';
             localPlayers.forEach((p, idx) => {
                 const badge = document.createElement('div');
-                badge.className = "flex items-center space-x-2 bg-white/5 border border-white/5 px-3 py-1.5 rounded-xl text-xs font-medium text-white";
-                badge.innerHTML = `
-                    <span>${p}</span>
-                    <button onclick="removeLocalPlayer(${idx})" class="text-slate-500 hover:text-rose-400 ml-1"><i class="fa-solid fa-xmark text-[10px]"></i></button>
-                `;
+                badge.className = "flex items-center space-x-1.5 bg-white/5 border border-white/5 px-2.5 py-1 rounded-xl text-xs font-medium text-white";
+                badge.innerHTML = `<span>${p}</span><button onclick="removeLocalPlayer(${idx})" class="text-slate-500 hover:text-rose-400 ml-1"><i class="fa-solid fa-xmark text-[10px]"></i></button>`;
                 listEl.appendChild(badge);
             });
             document.getElementById('local-player-count').textContent = localPlayers.length;
@@ -570,34 +671,93 @@
             }
         }
 
+        function getSelectedModifiersLocal() {
+            return {
+                silent: document.getElementById('mod-silent').checked,
+                chaotic: document.getElementById('mod-chaotic').checked,
+                fakeclue: document.getElementById('mod-fakeclue').checked
+            };
+        }
+
+        async function updateOnlineModifiers() {
+            if (!isHost || !db) return;
+            const mods = {
+                silent: document.getElementById('online-mod-silent').checked,
+                chaotic: document.getElementById('online-mod-chaotic').checked,
+                fakeclue: document.getElementById('online-mod-fakeclue').checked
+            };
+            await db.collection('rooms').doc(roomCode).update({ modifiers: mods });
+        }
+
         async function startOnlineMatch() {
-    if (!isHost || !db) return;
-    const docRef = db.collection('rooms').doc(roomCode);
-    const doc = await docRef.get();
-    if (!doc.exists) return;
-    const data = doc.data();
+            if (!isHost || !db) return;
+            const docRef = db.collection('rooms').doc(roomCode);
+            const doc = await docRef.get();
+            if (!doc.exists) return;
+            const data = doc.data();
 
-    // Seleziona una coppia di parole casuale
-    const randomPair = wordPairs[Math.floor(Math.random() * wordPairs.length)];
-    let players = data.players;
-    let shuffled = players.map((_, i) => i).sort(() => Math.random() - 0.5);
-    let impIndices = shuffled.slice(0, data.impostorsCount || 1);
+            const randomPair = wordPairs[Math.floor(Math.random() * wordPairs.length)];
+            const chosenDice = luckDiceOptions[Math.floor(Math.random() * luckDiceOptions.length)];
 
-    // Assegna i ruoli a ciascun giocatore
-    let roles = {};
-    players.forEach((p, idx) => {
-        let isImp = impIndices.includes(idx);
-        roles[p.name] = { isImp, word: isImp ? randomPair.impostor : randomPair.civil };
-    });
+            let players = data.players;
+            let shuffled = players.map((_, i) => i).sort(() => Math.random() - 0.5);
+            let impIndices = shuffled.slice(0, data.impostorsCount || 1);
+            let civilians = shuffled.filter(i => !impIndices.includes(i));
 
-    // Aggiorna lo stato su Firebase: questo farà scattare il listener per tutti i partecipanti
-    await docRef.update({
-        status: 'reveal',
-        civilWord: randomPair.civil,
-        impostorWord: randomPair.impostor,
-        roles: roles
-    });
-}
+            let chaoticName = "";
+            let chaoticWord = "";
+            if (data.modifiers && data.modifiers.chaotic && civilians.length > 1) {
+                let cIdx = civilians.splice(Math.floor(Math.random() * civilians.length), 1)[0];
+                chaoticName = players[cIdx].name;
+                // Estraiamo una parola diversa per il caotico
+                let otherPairs = wordPairs.filter(p => p.civil !== randomPair.civil);
+                let chaoticPair = otherPairs[Math.floor(Math.random() * otherPairs.length)];
+                chaoticWord = chaoticPair.civil;
+            }
+
+            let silentName = "";
+            let remainingForSilent = shuffled.filter(i => !impIndices.includes(i) && players[i].name !== chaoticName);
+            if (data.modifiers && data.modifiers.silent && remainingForSilent.length > 0) {
+                let sIdx = remainingForSilent[Math.floor(Math.random() * remainingForSilent.length)];
+                silentName = players[sIdx].name;
+            }
+
+            let roles = {};
+            players.forEach((p, idx) => {
+                let isImp = impIndices.includes(idx);
+                let isChaotic = (p.name === chaoticName);
+                let isSilent = (p.name === silentName);
+                let word = randomPair.civil;
+                let fakeText = "";
+                let modText = "";
+
+                if (isImp) {
+                    word = randomPair.impostor;
+                    if (data.modifiers && data.modifiers.fakeclue) {
+                        fakeText = `o ${randomPair.impostor} o ${randomPair.fake}`;
+                    }
+                } else if (isChaotic) {
+                    word = chaoticWord;
+                }
+
+                if (isSilent) modText = "Sei IL SILENZIOSO: puoi inviare un solo messaggio in chat!";
+
+                roles[p.name] = { isImp, isChaotic, isSilent, word, fakeText, modText };
+            });
+
+            await docRef.update({
+                status: 'reveal',
+                civilWord: randomPair.civil,
+                impostorWord: randomPair.impostor,
+                luckRule: chosenDice,
+                chaoticPlayer: chaoticName,
+                silentPlayer: silentName,
+                roles: roles,
+                chatMessages: [],
+                timerRunning: false,
+                timeLeft: 120
+            });
+        }
 
         function startLocalMatch() {
             if (localPlayers.length < 3) {
@@ -605,16 +765,53 @@
                 return;
             }
 
+            activeModifiers = getSelectedModifiersLocal();
             const randomPair = wordPairs[Math.floor(Math.random() * wordPairs.length)];
             localGame.civilWord = randomPair.civil;
             localGame.impostorWord = randomPair.impostor;
+            localGame.currentDiceRule = luckDiceOptions[Math.floor(Math.random() * luckDiceOptions.length)];
+            localGame.chatMessages = [];
+            localGame.localMessagesSent = {};
 
             let shuffled = localPlayers.map((_, i) => i).sort(() => Math.random() - 0.5);
             let impIndices = shuffled.slice(0, localImpostorsCount);
+            let civilians = shuffled.filter(i => !impIndices.includes(i));
+
+            localGame.chaoticPlayer = "";
+            let chaoticWord = "";
+            if (activeModifiers.chaotic && civilians.length > 1) {
+                let cIdx = civilians.splice(Math.floor(Math.random() * civilians.length), 1)[0];
+                localGame.chaoticPlayer = localPlayers[cIdx];
+                let otherPairs = wordPairs.filter(p => p.civil !== randomPair.civil);
+                let chaoticPair = otherPairs[Math.floor(Math.random() * otherPairs.length)];
+                chaoticWord = chaoticPair.civil;
+            }
+
+            localGame.silentPlayer = "";
+            let remainingForSilent = shuffled.filter(i => !impIndices.includes(i) && localPlayers[i] !== localGame.chaoticPlayer);
+            if (activeModifiers.silent && remainingForSilent.length > 0) {
+                let sIdx = remainingForSilent[Math.floor(Math.random() * remainingForSilent.length)];
+                localGame.silentPlayer = localPlayers[sIdx];
+            }
 
             localGame.assignedRoles = localPlayers.map((name, idx) => {
                 let isImp = impIndices.includes(idx);
-                return { name, isImp, word: isImp ? randomPair.impostor : randomPair.civil };
+                let isChaotic = (name === localGame.chaoticPlayer);
+                let isSilent = (name === localGame.silentPlayer);
+                let word = randomPair.civil;
+                let fakeText = "";
+                let modText = "";
+
+                if (isImp) {
+                    word = randomPair.impostor;
+                    if (activeModifiers.fakeclue) fakeText = `o ${randomPair.impostor} o ${randomPair.fake}`;
+                } else if (isChaotic) {
+                    word = chaoticWord;
+                }
+
+                if (isSilent) modText = "Sei IL SILENZIOSO: puoi inviare un solo messaggio in chat!";
+
+                return { name, isImp, isChaotic, isSilent, word, fakeText, modText };
             });
 
             localGame.revealIndex = 0;
@@ -627,26 +824,39 @@
             cardInner.style.transition = 'none';
             cardInner.classList.remove('flipped');
             void cardInner.offsetWidth; 
-            cardInner.style.transition = 'transform 0.5s cubic-bezier(0.4, 0.2, 0.2, 1)';
+            cardInner.style.transition = 'transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1)';
 
             const player = localGame.assignedRoles[localGame.revealIndex];
             document.getElementById('reveal-turn-subtitle').textContent = `Passa il dispositivo a`;
             document.getElementById('reveal-player-title').textContent = player.name;
             document.getElementById('card-player-label').textContent = player.name;
             document.getElementById('secret-word-display').textContent = player.word;
+            
+            const fakeEl = document.getElementById('fake-clue-display');
+            if (player.fakeText) {
+                fakeEl.textContent = player.fakeText;
+                fakeEl.classList.remove('hidden');
+            } else {
+                fakeEl.classList.add('hidden');
+            }
+
+            document.getElementById('modifier-badge-display').textContent = player.modText || "";
 
             const labelEl = document.getElementById('reveal-card-label');
             if (gameMode === 'impostore') {
                 if (player.isImp) {
-                    labelEl.textContent = "SEI L'IMPOSTORE (RICEVI UN INDIZIO)";
+                    labelEl.textContent = "SEI L'IMPOSTORE";
                     labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-rose-300 px-4 py-1.5 bg-rose-500/20 border border-rose-500/30 rounded-full shadow-md";
+                } else if (player.isChaotic) {
+                    labelEl.textContent = "SEI IL CAOTICO";
+                    labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-amber-300 px-4 py-1.5 bg-amber-500/20 border border-amber-500/30 rounded-full shadow-md";
                 } else {
                     labelEl.textContent = "SEI UN CIVILE";
-                    labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-emerald-300 px-4 py-1.5 bg-emerald-500/20 border border-emerald-500/30 rounded-full shadow-md";
+                    labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-emerald-300 px-4 py-1.5 bg-emerald-500/20 border border-emerald-500/20 rounded-full shadow-md";
                 }
             } else {
                 labelEl.textContent = "LA TUA PAROLA SEGRETA";
-                labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-purple-300 px-4 py-1.5 bg-purple-500/20 border border-purple-500/30 rounded-full shadow-md";
+                labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-purple-300 px-4 py-1.5 bg-purple-500/20 border border-purple-500/20 rounded-full shadow-md";
             }
         }
 
@@ -661,22 +871,90 @@
                     prepareLocalReveal();
                 } else {
                     goToScreen('screen-discussion');
+                    document.getElementById('luck-dice-text').textContent = localGame.currentDiceRule;
                     resetTimer();
                 }
             } else {
                 goToScreen('screen-discussion');
-                resetTimer();
+                if (isHost) resetTimer();
             }
         }
 
-        function goToVotingPhase() {
+        function goToChatPhase() {
+            if (playType === 'local') {
+                goToScreen('screen-chat');
+                renderLocalChat();
+            } else {
+                if (db && isHost) {
+                    db.collection('rooms').doc(roomCode).update({ status: 'chat' });
+                }
+            }
+        }
+
+        function renderLocalChat() {
+            const container = document.getElementById('chat-messages-container');
+            container.innerHTML = '';
+            localGame.chatMessages.forEach(msg => {
+                const div = document.createElement('div');
+                div.className = "bg-dark-800 p-2.5 rounded-xl border border-white/5 text-xs";
+                div.innerHTML = `<span class="font-bold text-purple-400">${msg.sender}:</span> <span class="text-white">${msg.text}</span>`;
+                container.appendChild(div);
+            });
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chat-input-msg');
+            const text = input.value.trim();
+            if (!text) return;
+
+            if (playType === 'local') {
+                // In modalità locale chiediamo chi sta scrivendo o usiamo un prompt/selettore se necessario, oppure prendiamo un mittente a scelta. Semplifichiamo permettendo di scegliere o inserire il nome in chat se non specificato, oppure usiamo un prompt rapido o un selettore.
+                let senderName = prompt("Chi sta scrivendo questo messaggio?", localPlayers[0] || "Giocatore");
+                if (!senderName || !localPlayers.includes(senderName)) return;
+
+                let roleInfo = localGame.assignedRoles.find(r => r.name === senderName);
+                if (roleInfo && roleInfo.isSilent) {
+                    localGame.localMessagesSent[senderName] = (localGame.localMessagesSent[senderName] || 0);
+                    if (localGame.localMessagesSent[senderName] >= 1) {
+                        alert("Sei Il Silenzioso e hai già esaurito il tuo unico messaggio!");
+                        return;
+                    }
+                    localGame.localMessagesSent[senderName]++;
+                }
+
+                localGame.chatMessages.push({ sender: senderName, text: text });
+                input.value = '';
+                renderLocalChat();
+            } else {
+                if (!db) return;
+                const docRef = db.collection('rooms').doc(roomCode);
+                const doc = await docRef.get();
+                const data = doc.data();
+                
+                let myRole = data.roles[myName];
+                let msgs = data.chatMessages || [];
+                let myMsgCount = msgs.filter(m => m.sender === myName).length;
+
+                if (myRole && myRole.isSilent && myMsgCount >= 1) {
+                    alert("Sei Il Silenzioso e hai già inviato il tuo messaggio concesso!");
+                    return;
+                }
+
+                msgs.push({ sender: myName, text: text });
+                input.value = '';
+                await docRef.update({ chatMessages: msgs });
+            }
+        }
+
+        function proceedToVotingFromChat() {
             if (playType === 'local') {
                 localGame.votingIndex = 0;
                 localGame.votes = {};
                 goToScreen('screen-voting');
                 prepareLocalVoteStep();
             } else {
-                if (db) {
+                if (db && isHost) {
                     db.collection('rooms').doc(roomCode).update({ status: 'voting' });
                 }
             }
@@ -711,6 +989,30 @@
             }
         }
 
+        function checkWinConditionAdvanced(impostors, voteCounts, totalPlayers, chaoticName) {
+            let mostVoted = "-";
+            let maxV = -1;
+            for (let t in voteCounts) {
+                if (voteCounts[t] > maxV) { maxV = voteCounts[t]; mostVoted = t; }
+            }
+
+            let totalVotesCast = Object.values(voteCounts).reduce((a, b) => a + b, 0);
+            let correctVotes = voteCounts[mostVoted] || 0;
+            let threshold = Math.ceil(totalVotesCast / 2);
+
+            if (chaoticName && mostVoted === chaoticName && correctVotes >= threshold) {
+                return { success: true, message: `Vittoria del Caotico (${chaoticName})!` };
+            }
+
+            let isImpostorCaught = impostors.includes(mostVoted);
+
+            if (isImpostorCaught && correctVotes >= threshold) {
+                return { success: true, message: "Vittoria Civili (Impostore Smascherato)" };
+            } else {
+                return { success: false, message: "Vittoria Impostori (Infiltrati Salvi)" };
+            }
+        }
+
         function showLocalResults() {
             goToScreen('screen-results');
             document.getElementById('result-civil-word').textContent = localGame.civilWord;
@@ -718,31 +1020,28 @@
             let impostorNames = localGame.assignedRoles.filter(r => r.isImp).map(r => r.name);
             document.getElementById('final-impostors-display').textContent = impostorNames.join(", ");
 
-            let voteCounts = {};
-            Object.values(localGame.votes).forEach(targetIdx => {
-                voteCounts[targetIdx] = (voteCounts[targetIdx] || 0) + 1;
-            });
-
-            let mostVotedIdx = -1;
-            let maxV = -1;
-            for (let idx in voteCounts) {
-                if (voteCounts[idx] > maxV) {
-                    maxV = voteCounts[idx];
-                    mostVotedIdx = parseInt(idx);
-                }
+            if (localGame.chaoticPlayer) {
+                document.getElementById('result-chaotic-box').classList.remove('hidden');
+                document.getElementById('final-chaotic-display').textContent = localGame.chaoticPlayer;
+            } else {
+                document.getElementById('result-chaotic-box').classList.add('hidden');
             }
 
-            let mostVotedName = localPlayers[mostVotedIdx];
-            let isImpostorCaught = impostorNames.includes(mostVotedName);
+            let voteCounts = {};
+            Object.values(localGame.votes).forEach(targetIdx => {
+                let name = localPlayers[targetIdx];
+                voteCounts[name] = (voteCounts[name] || 0) + 1;
+            });
+
+            let winCheck = checkWinConditionAdvanced(impostorNames, voteCounts, localPlayers.length, localGame.chaoticPlayer);
 
             const badge = document.getElementById('winner-text');
             const container = document.getElementById('winner-badge');
 
-            if (isImpostorCaught) {
-                badge.textContent = "Vittoria Civili (Impostore Smascherato)";
+            badge.textContent = winCheck.message;
+            if (winCheck.success) {
                 container.className = "inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-extrabold uppercase tracking-wider shadow-md";
             } else {
-                badge.textContent = "Vittoria Impostori (Infiltrati Salvi)";
                 container.className = "inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs font-extrabold uppercase tracking-wider shadow-md";
             }
 
@@ -752,11 +1051,7 @@
                 let targetIdx = localGame.votes[voterIdx];
                 let item = document.createElement('div');
                 item.className = "flex justify-between items-center bg-dark-900/80 p-3 rounded-xl border border-white/5 text-xs";
-                item.innerHTML = `
-                    <span class="text-white font-bold">${localPlayers[voterIdx]}</span>
-                    <span class="text-slate-400">ha votato</span>
-                    <span class="text-rose-400 font-semibold">${localPlayers[targetIdx]}</span>
-                `;
+                item.innerHTML = `<span class="text-white font-bold">${localPlayers[voterIdx]}</span><span class="text-slate-400">ha votato</span><span class="text-rose-400 font-semibold">${localPlayers[targetIdx]}</span>`;
                 breakdown.appendChild(item);
             }
         }
@@ -765,7 +1060,7 @@
             if (playType === 'local') {
                 startLocalMatch();
             } else {
-                goToScreen('screen-setup-online');
+                if (isHost) startOnlineMatch();
             }
         }
 
@@ -786,19 +1081,22 @@
                 mode: gameMode,
                 status: 'lobby',
                 impostorsCount: 1,
+                modifiers: { silent: false, chaotic: false, fakeclue: false },
                 players: [{ name: myName }],
                 roles: {},
                 votes: {},
+                chatMessages: [],
                 civilWord: "",
-                impostorWord: ""
+                impostorWord: "",
+                luckRule: "",
+                chaoticPlayer: "",
+                silentPlayer: "",
+                timerRunning: false,
+                timeLeft: 120
             };
 
             if (db) {
-                try {
-                    await db.collection('rooms').doc(roomCode).set(initialRoomData);
-                } catch(e) {
-                    console.error("Firebase write error:", e);
-                }
+                try { await db.collection('rooms').doc(roomCode).set(initialRoomData); } catch(e) { console.error(e); }
             }
 
             setupRoomListener();
@@ -828,9 +1126,7 @@
                         data.players.push({ name: myName });
                         await docRef.update({ players: data.players });
                     }
-                } catch(e) {
-                    console.error("Firebase join error:", e);
-                }
+                } catch(e) { console.error(e); }
             }
 
             roomCode = code;
@@ -850,10 +1146,16 @@
                 document.getElementById('start-game-btn').classList.remove('hidden');
                 document.getElementById('waiting-host-msg').classList.add('hidden');
                 document.getElementById('host-controls').classList.remove('hidden');
+                document.getElementById('host-timer-controls').classList.remove('hidden');
+                document.getElementById('guest-timer-msg').classList.add('hidden');
+                document.getElementById('host-modifiers-box').classList.remove('hidden');
             } else {
                 document.getElementById('start-game-btn').classList.add('hidden');
                 document.getElementById('waiting-host-msg').classList.remove('hidden');
                 document.getElementById('host-controls').classList.add('hidden');
+                document.getElementById('host-timer-controls').classList.add('hidden');
+                document.getElementById('guest-timer-msg').classList.remove('hidden');
+                document.getElementById('host-modifiers-box').classList.add('hidden');
             }
         }
 
@@ -869,42 +1171,65 @@
                 listEl.innerHTML = '';
                 data.players.forEach(p => {
                     const badge = document.createElement('div');
-                    badge.className = "flex items-center space-x-2 bg-white/5 border border-white/5 px-3 py-1.5 rounded-xl text-xs font-medium text-white";
+                    badge.className = "flex items-center space-x-1.5 bg-white/5 border border-white/5 px-2.5 py-1 rounded-xl text-xs font-medium text-white";
                     badge.innerHTML = `<span>${p.name}</span>`;
                     listEl.appendChild(badge);
                 });
                 document.getElementById('online-player-count').textContent = data.players.length;
                 document.getElementById('online-setting-impostors').textContent = data.impostorsCount;
 
-if (data.status === 'reveal') {
-    showOnlineReveal(data);
-} else if (data.status === 'discussion') {
-    goToScreen('screen-discussion');
-} else if (data.status === 'voting') {
-    showOnlineVoting(data);
-} else if (data.status === 'results') {
-    showOnlineResults(data);
-}
+                if (data.modifiers) {
+                    document.getElementById('online-mod-silent').checked = !!data.modifiers.silent;
+                    document.getElementById('online-mod-chaotic').checked = !!data.modifiers.chaotic;
+                    document.getElementById('online-mod-fakeclue').checked = !!data.modifiers.fakeclue;
+                }
+
+                if (data.timeLeft !== undefined) {
+                    timeLeft = data.timeLeft;
+                    updateTimerDisplay();
+                }
+
+                if (data.status === 'reveal') {
+                    showOnlineReveal(data);
+                } else if (data.status === 'discussion') {
+                    goToScreen('screen-discussion');
+                    if (data.luckRule) document.getElementById('luck-dice-text').textContent = data.luckRule;
+                } else if (data.status === 'chat') {
+                    goToScreen('screen-chat');
+                    renderOnlineChat(data);
+                } else if (data.status === 'voting') {
+                    showOnlineVoting(data);
+                } else if (data.status === 'results') {
+                    showOnlineResults(data);
+                }
             });
         }
 
-        function adjustOnlineImpostors(delta) {
-            if (!isHost || !db) return;
+        function renderOnlineChat(data) {
+            const container = document.getElementById('chat-messages-container');
+            container.innerHTML = '';
+            (data.chatMessages || []).forEach(msg => {
+                const div = document.createElement('div');
+                div.className = "bg-dark-800 p-2.5 rounded-xl border border-white/5 text-xs";
+                div.innerHTML = `<span class="font-bold text-purple-400">${msg.sender}:</span> <span class="text-white">${msg.text}</span>`;
+                container.appendChild(div);
+            });
+            container.scrollTop = container.scrollHeight;
         }
-async function adjustOnlineImpostors(delta) {
-    if (!isHost || !db) return;
-    const docRef = db.collection('rooms').doc(roomCode);
-    const doc = await docRef.get();
-    if (!doc.exists) return;
-    let data = doc.data();
-    
-    let maxImp = Math.max(1, Math.floor(data.players.length / 2));
-    let newVal = (data.impostorsCount || 1) + delta;
-    
-    if (newVal >= 1 && newVal <= maxImp) {
-        await docRef.update({ impostorsCount: newVal });
-    }
-}
+
+        async function adjustOnlineImpostors(delta) {
+            if (!isHost || !db) return;
+            const docRef = db.collection('rooms').doc(roomCode);
+            const doc = await docRef.get();
+            if (!doc.exists) return;
+            let data = doc.data();
+            let maxImp = Math.max(1, Math.floor(data.players.length / 2));
+            let newVal = (data.impostorsCount || 1) + delta;
+            if (newVal >= 1 && newVal <= maxImp) {
+                await docRef.update({ impostorsCount: newVal });
+            }
+        }
+
         function showOnlineReveal(data) {
             goToScreen('screen-reveal');
             const myRole = data.roles[myName];
@@ -914,31 +1239,44 @@ async function adjustOnlineImpostors(delta) {
             cardInner.style.transition = 'none';
             cardInner.classList.remove('flipped');
             void cardInner.offsetWidth;
-            cardInner.style.transition = 'transform 0.5s cubic-bezier(0.4, 0.2, 0.2, 1)';
+            cardInner.style.transition = 'transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1)';
 
             document.getElementById('reveal-turn-subtitle').textContent = "Il tuo Ruolo";
             document.getElementById('reveal-player-title').textContent = myName;
             document.getElementById('card-player-label').textContent = myName;
             document.getElementById('secret-word-display').textContent = myRole.word;
             
+            const fakeEl = document.getElementById('fake-clue-display');
+            if (myRole.fakeText) {
+                fakeEl.textContent = myRole.fakeText;
+                fakeEl.classList.remove('hidden');
+            } else {
+                fakeEl.classList.add('hidden');
+            }
+
+            document.getElementById('modifier-badge-display').textContent = myRole.modText || "";
+            
             const labelEl = document.getElementById('reveal-card-label');
             if (gameMode === 'impostore') {
                 if (myRole.isImp) {
-                    labelEl.textContent = "SEI L'IMPOSTORE (RICEVI UN INDIZIO)";
+                    labelEl.textContent = "SEI L'IMPOSTORE";
                     labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-rose-300 px-4 py-1.5 bg-rose-500/20 border border-rose-500/30 rounded-full shadow-md";
+                } else if (myRole.isChaotic) {
+                    labelEl.textContent = "SEI IL CAOTICO";
+                    labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-amber-300 px-4 py-1.5 bg-amber-500/20 border border-amber-500/20 rounded-full shadow-md";
                 } else {
                     labelEl.textContent = "SEI UN CIVILE";
-                    labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-emerald-300 px-4 py-1.5 bg-emerald-500/20 border border-emerald-500/30 rounded-full shadow-md";
+                    labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-emerald-300 px-4 py-1.5 bg-emerald-500/20 border border-emerald-500/20 rounded-full shadow-md";
                 }
             } else {
                 labelEl.textContent = "LA TUA PAROLA SEGRETA";
-                labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-purple-300 px-4 py-1.5 bg-purple-500/20 border border-purple-500/30 rounded-full shadow-md";
+                labelEl.className = "text-xs tracking-widest uppercase font-extrabold text-purple-300 px-4 py-1.5 bg-purple-500/20 border border-purple-500/20 rounded-full shadow-md";
             }
         }
 
         async function showOnlineVoting(data) {
             goToScreen('screen-voting');
-            document.getElementById('voting-subtitle').textContent = "Votazione Segreta";
+            document.getElementById('voting-subtitle').textContent = "Votazione";
             document.getElementById('voting-title').textContent = "Chi voti?";
             document.getElementById('voting-desc').textContent = "Scegli chi sospetti di più";
 
@@ -956,19 +1294,18 @@ async function adjustOnlineImpostors(delta) {
         }
 
         async function castOnlineVote(targetName, data) {
-    if (!db) return;
-    const docRef = db.collection('rooms').doc(roomCode);
-    const doc = await docRef.get();
-    let votes = doc.data().votes || {};
-    votes[myName] = targetName;
+            if (!db) return;
+            const docRef = db.collection('rooms').doc(roomCode);
+            const doc = await docRef.get();
+            let votes = doc.data().votes || {};
+            votes[myName] = targetName;
 
-    let updateData = { votes: votes };
-    if (Object.keys(votes).length >= data.players.length && isHost) {
-        updateData.status = 'results';
-    }
-    await docRef.update(updateData);
-
-}
+            let updateData = { votes: votes };
+            if (Object.keys(votes).length >= data.players.length && isHost) {
+                updateData.status = 'results';
+            }
+            await docRef.update(updateData);
+        }
 
         function showOnlineResults(data) {
             goToScreen('screen-results');
@@ -980,26 +1317,27 @@ async function adjustOnlineImpostors(delta) {
             }
             document.getElementById('final-impostors-display').textContent = impostors.join(", ");
 
+            if (data.chaoticPlayer) {
+                document.getElementById('result-chaotic-box').classList.remove('hidden');
+                document.getElementById('final-chaotic-display').textContent = data.chaoticPlayer;
+            } else {
+                document.getElementById('result-chaotic-box').classList.add('hidden');
+            }
+
             let voteCounts = {};
             Object.values(data.votes || {}).forEach(target => {
                 voteCounts[target] = (voteCounts[target] || 0) + 1;
             });
 
-            let mostVoted = "-";
-            let maxV = -1;
-            for (let t in voteCounts) {
-                if (voteCounts[t] > maxV) { maxV = voteCounts[t]; mostVoted = t; }
-            }
+            let winCheck = checkWinConditionAdvanced(impostors, voteCounts, data.players.length, data.chaoticPlayer);
 
-            const isImpostorCaught = impostors.includes(mostVoted);
             const badge = document.getElementById('winner-text');
             const container = document.getElementById('winner-badge');
 
-            if (isImpostorCaught) {
-                badge.textContent = "Vittoria Civili (Impostore Smascherato)";
+            badge.textContent = winCheck.message;
+            if (winCheck.success) {
                 container.className = "inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-extrabold uppercase tracking-wider shadow-md";
             } else {
-                badge.textContent = "Vittoria Impostori (Infiltrati Salvi)";
                 container.className = "inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs font-extrabold uppercase tracking-wider shadow-md";
             }
 
@@ -1009,45 +1347,57 @@ async function adjustOnlineImpostors(delta) {
                 let votedFor = data.votes[voter];
                 let item = document.createElement('div');
                 item.className = "flex justify-between items-center bg-dark-900/80 p-3 rounded-xl border border-white/5 text-xs";
-                item.innerHTML = `
-                    <span class="text-white font-bold">${voter}</span>
-                    <span class="text-slate-400">ha votato</span>
-                    <span class="text-rose-400 font-semibold">${votedFor}</span>
-                `;
+                item.innerHTML = `<span class="text-white font-bold">${voter}</span><span class="text-slate-400">ha votato</span><span class="text-rose-400 font-semibold">${votedFor}</span>`;
                 breakdown.appendChild(item);
             }
         }
 
-        function toggleTimer() {
+        async function toggleTimer() {
+            if (playType === 'online' && !isHost) return;
+
             if (isTimerRunning) {
                 clearInterval(timerInterval);
                 isTimerRunning = false;
                 document.getElementById('timer-btn-text').textContent = "Riprendi";
                 document.getElementById('timer-icon').className = "fa-solid fa-play text-purple-400";
+                if (playType === 'online' && db) await db.collection('rooms').doc(roomCode).update({ timerRunning: false });
             } else {
                 isTimerRunning = true;
                 document.getElementById('timer-btn-text').textContent = "Pausa";
                 document.getElementById('timer-icon').className = "fa-solid fa-pause text-purple-400";
-                timerInterval = setInterval(() => {
+                if (playType === 'online' && db) await db.collection('rooms').doc(roomCode).update({ timerRunning: true });
+                
+                timerInterval = setInterval(async () => {
                     if (timeLeft > 0) {
                         timeLeft--;
                         updateTimerDisplay();
+                        if (playType === 'online' && isHost && db) {
+                            await db.collection('rooms').doc(roomCode).update({ timeLeft: timeLeft });
+                        }
                     } else {
                         clearInterval(timerInterval);
                         isTimerRunning = false;
-                        goToVotingPhase();
+                        if (playType === 'online' && isHost && db) {
+                            await db.collection('rooms').doc(roomCode).update({ timerRunning: false, status: 'chat' });
+                        } else if (playType === 'local') {
+                            goToChatPhase();
+                        }
                     }
                 }, 1000);
             }
         }
 
-        function resetTimer() {
+        async function resetTimer() {
+            if (playType === 'online' && !isHost) return;
             clearInterval(timerInterval);
             isTimerRunning = false;
             timeLeft = 120;
             updateTimerDisplay();
             document.getElementById('timer-btn-text').textContent = "Avvia Timer";
             document.getElementById('timer-icon').className = "fa-solid fa-play text-purple-400";
+            if (playType === 'online' && db) {
+                await db.collection('rooms').doc(roomCode).update({ timerRunning: false, timeLeft: 120 });
+            }
         }
 
         function updateTimerDisplay() {
@@ -1061,4 +1411,3 @@ async function adjustOnlineImpostors(delta) {
     </script>
 </body>
 </html>
-7
