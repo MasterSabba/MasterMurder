@@ -862,32 +862,20 @@
         function adjustOnlineImpostors(delta) {
             if (!isHost || !db) return;
         }
-
-        async function startOnlineMatch() {
-            if (!isHost || !db) return;
-            const docRef = db.collection('rooms').doc(roomCode);
-            const doc = await docRef.get();
-            const data = doc.data();
-
-            const randomPair = wordPairs[Math.floor(Math.random() * wordPairs.length)];
-            let players = data.players;
-            let shuffled = players.map((_, i) => i).sort(() => Math.random() - 0.5);
-            let impIndices = shuffled.slice(0, data.impostorsCount);
-
-            let roles = {};
-            players.forEach((p, idx) => {
-                let isImp = impIndices.includes(idx);
-                roles[p.name] = { isImp, word: isImp ? randomPair.impostor : randomPair.civil };
-            });
-
-            await docRef.update({
-                status: 'reveal',
-                civilWord: randomPair.civil,
-                impostorWord: randomPair.impostor,
-                roles: roles
-            });
-        }
-
+async function adjustOnlineImpostors(delta) {
+    if (!isHost || !db) return;
+    const docRef = db.collection('rooms').doc(roomCode);
+    const doc = await docRef.get();
+    if (!doc.exists) return;
+    let data = doc.data();
+    
+    let maxImp = Math.max(1, Math.floor(data.players.length / 2));
+    let newVal = (data.impostorsCount || 1) + delta;
+    
+    if (newVal >= 1 && newVal <= maxImp) {
+        await docRef.update({ impostorsCount: newVal });
+    }
+}
         function showOnlineReveal(data) {
             goToScreen('screen-reveal');
             const myRole = data.roles[myName];
